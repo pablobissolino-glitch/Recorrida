@@ -234,9 +234,10 @@ function matchEF(w){
   let m;
   if(/^barbecho$/.test(w)) return "Barbecho";
   if(/^(sembrado|sembrada|recien sembrado)$/.test(w)) return "Sembrado";
-  if(/^(vc|v c|ve ce|cotiledon|cotiledonar)$/.test(w)) return "Vc";
-  if(/^(ve|v e|uve e)$/.test(w)) return "Ve";
-  if(m=w.match(/^(?:v|ve|uve) ?(\d{1,2})$/)){const n=+m[1]; if(n>=1&&n<=13) return "V"+n;}
+  /* el dictado suele escribir la V como B ("B3", "be tres"): se toman igual */
+  if(/^(vc|v c|ve ce|be ce|bc|b c|uve ce|cotiledon|cotiledonar)$/.test(w)) return "Vc";
+  if(/^(ve|v e|uve e|be e|b e)$/.test(w)) return "Ve";
+  if(m=w.match(/^(?:v|ve|uve|b|be) ?(\d{1,2})$/)){const n=+m[1]; if(n>=1&&n<=13) return "V"+n;}
   if(m=w.match(/^(?:r|erre) ?(\d)(?:[. ](\d))?$/)){const a=+m[1]; if(a>=1&&a<=8) return "R"+a+(m[2]&&a===5?"."+m[2]:"");}
   if(m=w.match(/^(?:z|zeta|zadoks) ?(\d)(?:[. ]?(\d))?$/)) return `Z ${m[1]}.${m[2]||"0"}`;
   if(m=w.match(/^z(\d)\.(\d)$/)) return `Z ${m[1]}.${m[2]}`;
@@ -272,10 +273,43 @@ function interpretar(texto){
     }
     break;
   }
-  let com=orig.slice(i).join(" ").replace(/^[\s,.;:-]+/,"");
-  if(com) com=com[0].toUpperCase()+com.slice(1);
-  r.comentario=com;
+  r.comentario=extraerEnMedio(orig.slice(i),r);
   return r;
+}
+/* Busca estado del cultivo y EF dichos en medio del comentario
+   ("el cultivo está bueno", "se ve regular", "está en B3") y los saca del texto. */
+const CONTEXTO_ESTADO=new Set(["esta","estado","ve","viene","encuentra","luce","veo"]);
+const ANTES_ESTADO=new Set(["el","la","cultivo","lote","esta","estado","se","ve","viene","encuentra","luce","veo","lo","en","general","es","del","y"]);
+const ANTES_EF=new Set(["en","esta","estado","fenologico","el","cultivo","y"]);
+function extraerEnMedio(toks,r){
+  const N=toks.map(normTok), quitar=new Set();
+  if(!r.estado){
+    for(let k=0;k<N.length&&!r.estado;k++){
+      let est=null,fin=k;
+      if(N[k]==="muy"&&k+1<N.length&&matchEstado("muy "+N[k+1])){est=matchEstado("muy "+N[k+1]);fin=k+1;}
+      else if(matchEstado(N[k])&&N[k]!=="sin") est=matchEstado(N[k]);
+      if(!est) continue;
+      const previas=N.slice(Math.max(0,k-3),k);
+      if(!previas.some(t=>CONTEXTO_ESTADO.has(t))) continue;   /* "control regular de malezas" no cuenta */
+      let s=k; while(s>0&&ANTES_ESTADO.has(N[s-1])&&!quitar.has(s-1)) s--;
+      for(let x=s;x<=fin;x++) quitar.add(x);
+      r.estado=est;
+    }
+  }
+  if(!r.ef){
+    for(let k=0;k<N.length&&!r.ef;k++){
+      if(quitar.has(k)) continue;
+      for(let L=3;L>=1;L--){ if(k+L>N.length) continue;
+        const e=matchEF(N.slice(k,k+L).join(" ")); if(!e) continue;
+        let s=k; while(s>0&&ANTES_EF.has(N[s-1])&&!quitar.has(s-1)) s--;
+        for(let x=s;x<k+L;x++) quitar.add(x);
+        r.ef=e; break; }
+    }
+  }
+  let com=toks.filter((_,x)=>!quitar.has(x)).join(" ")
+    .replace(/\s+([,.;:])/g,"$1").replace(/([,.;:])(\s*[,.;:])+/g,"$1").replace(/^[\s,.;:-]+/,"").replace(/[\s,;:-]+$/,"").trim();
+  if(com) com=com[0].toUpperCase()+com.slice(1);
+  return com;
 }
 function interpretarDesde(N,j,r){
   for(let L=4;L>=1;L--){ if(j+L>N.length) continue; const w=N.slice(j,j+L).join(" ");
