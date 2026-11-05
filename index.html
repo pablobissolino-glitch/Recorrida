@@ -10,18 +10,9 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
-  --campo:#E9EFE6;      /* fondo */
-  --hoja:#FFFFFF;       /* superficies */
-  --tinta:#16281C;      /* texto */
-  --tinta2:#4E6355;     /* texto secundario */
-  --verde:#1F5A2C;      /* acento SOS */
-  --verde2:#2F7A3B;
-  --brote:#D7E8CF;      /* lote recorrido */
-  --linea:#C9D5C4;
-  --alerta:#A8620A;
-  --alertaBg:#FBEFD9;
-  --error:#A3281E;
-  --r:14px;
+  --campo:#E9EFE6; --hoja:#FFFFFF; --tinta:#16281C; --tinta2:#4E6355;
+  --verde:#1F5A2C; --verde2:#2F7A3B; --linea:#C9D5C4;
+  --alerta:#9A5A08; --alertaBg:#FBEFD9; --alertaBorde:#E8B25C; --rojo:#B3261E;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--campo);color:var(--tinta);
@@ -31,105 +22,88 @@ button{cursor:pointer}
 :focus-visible{outline:3px solid var(--verde2);outline-offset:2px}
 .wrap{max-width:640px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
 
-/* cabecera */
-header{position:sticky;top:0;z-index:5;background:var(--verde);color:#fff;
-  padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+header{position:sticky;top:0;z-index:5;background:var(--verde);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
 header .fila{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px}
-header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em;flex:1}
+header h1{font-size:20px;margin:0;font-weight:700;flex:1}
 .red{font-size:13px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.16)}
 .red.sin{background:#F3C969;color:#3A2A00}
 
-/* contexto */
-.ctx{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 8px}
-.ctx .full{grid-column:1/-1}
+.ctx{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;margin:14px 0 4px}
 label.c{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--tinta2)}
-select,input[type=date],input[type=text],textarea{
-  width:100%;background:var(--hoja);border:1.5px solid var(--linea);border-radius:10px;
-  padding:11px 12px;min-height:48px;color:var(--tinta)}
+select,input[type=date],input[type=text],textarea{width:100%;background:var(--hoja);border:1.5px solid var(--linea);
+  border-radius:10px;padding:11px 12px;min-height:48px;color:var(--tinta)}
 textarea{resize:vertical}
-
 h2{font-size:16px;margin:22px 0 10px;color:var(--tinta2);font-weight:600}
 
-/* grilla de lotes */
-.lotes{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
-.lote{min-height:58px;border-radius:12px;border:1.5px solid var(--linea);background:var(--hoja);
-  padding:6px 8px;text-align:left;display:flex;flex-direction:column;justify-content:center;line-height:1.2}
-.lote b{font-size:16px;font-weight:650;word-break:break-word}
-.lote small{font-size:12px;color:var(--tinta2);margin-top:2px}
-.lote.hecho{background:var(--brote);border-color:var(--verde2)}
-.lote.hecho b::after{content:" ✓";color:var(--verde)}
+/* dictado: el protagonista */
+.dict{margin-top:14px;background:var(--hoja);border:1.5px solid var(--linea);border-radius:18px;padding:14px}
+.dict.oyendo{border-color:var(--rojo)}
+.dict textarea{border:0;padding:4px 2px;min-height:190px;font-size:18px;line-height:1.5;background:transparent}
+.dict textarea:focus{outline:none}
+.vivo{color:var(--tinta2);font-style:italic;min-height:0;font-size:16px;padding:0 2px}
+.vivo:empty{display:none}
+.micFila{display:flex;align-items:center;gap:14px;margin-top:10px}
+.mic{flex:none;width:76px;height:76px;border-radius:50%;border:0;background:var(--verde);color:#fff;display:grid;place-items:center}
+.mic svg{width:34px;height:34px}
+.mic.oye{background:var(--rojo);animation:latido 1.2s infinite}
+@keyframes latido{50%{box-shadow:0 0 0 12px rgba(179,38,30,.16)}}
+@media (prefers-reduced-motion:reduce){.mic.oye{animation:none}}
+.micTxt{font-size:15px;color:var(--tinta2);line-height:1.35}
+.micTxt b{display:block;color:var(--tinta);font-size:17px}
 
-/* botones */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;
-  border-radius:12px;border:1.5px solid var(--verde);background:var(--hoja);color:var(--verde);
-  padding:0 18px;font-weight:650}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:12px;
+  border:1.5px solid var(--verde);background:var(--hoja);color:var(--verde);padding:0 18px;font-weight:650}
 .btn.pri{background:var(--verde);color:#fff}
-.btn.peligro{border-color:var(--error);color:var(--error)}
-.btn.bloque{width:100%}
+.btn.peligro{border-color:var(--rojo);color:var(--rojo)}
 .btn:disabled{opacity:.45}
 .fila-btn{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .fila-btn .btn{flex:1 1 140px}
+.ayuda{font-size:14px;color:var(--tinta2);margin:8px 2px 0}
 
-/* pestañas inferiores */
-nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--hoja);border-top:1.5px solid var(--linea);
-  padding-bottom:env(safe-area-inset-bottom)}
+/* registros */
+.reg{background:var(--hoja);border:1.5px solid var(--linea);border-radius:14px;padding:12px 14px;margin-bottom:10px;width:100%;text-align:left;display:block}
+.reg.revisar{border-color:var(--alertaBorde);background:#FFFBF3}
+.reg.cargado{opacity:.6}
+.reg .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.reg .top b{font-size:18px}
+.reg .top span{color:var(--tinta2);font-size:14px;margin-left:auto}
+.reg .meta{margin-top:4px;font-size:15px;display:flex;flex-wrap:wrap;gap:4px}
+.reg .meta em{font-style:normal;background:var(--campo);border-radius:6px;padding:1px 7px}
+.reg .meta em.falta{background:var(--alertaBg);color:var(--alerta);font-weight:600}
+.reg p{margin:6px 0 0;font-size:15px}
+.grupo{font-size:14px;color:var(--tinta2);margin:18px 0 8px;font-weight:600}
+.vacio{text-align:center;color:var(--tinta2);padding:18px 10px}
+.resumenRev{background:var(--alertaBg);color:#5A3800;border-radius:10px;padding:9px 12px;font-size:15px;margin-bottom:10px}
+
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--hoja);border-top:1.5px solid var(--linea);padding-bottom:env(safe-area-inset-bottom)}
 nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
 nav button{background:none;border:0;min-height:62px;font-size:15px;color:var(--tinta2);font-weight:600;position:relative}
 nav button[aria-current=page]{color:var(--verde)}
 nav button[aria-current=page]::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;background:var(--verde);border-radius:0 0 3px 3px}
 .badge{display:inline-block;min-width:22px;padding:0 6px;border-radius:99px;background:var(--verde);color:#fff;font-size:12px;line-height:20px;margin-left:4px}
 
-/* editor (hoja inferior) */
+/* editor */
 .velo{position:fixed;inset:0;background:rgba(14,28,18,.45);z-index:10;display:none}
 .velo.on{display:block}
-.hojaEd{position:fixed;left:0;right:0;bottom:0;z-index:11;background:var(--campo);
-  border-radius:20px 20px 0 0;max-height:94vh;overflow:auto;transform:translateY(100%);
-  transition:transform .22s ease-out,visibility 0s .22s;visibility:hidden;padding:8px 16px calc(20px + env(safe-area-inset-bottom))}
+.hojaEd{position:fixed;left:0;right:0;bottom:0;z-index:11;background:var(--campo);border-radius:20px 20px 0 0;max-height:94vh;overflow:auto;
+  transform:translateY(100%);visibility:hidden;transition:transform .22s ease-out,visibility 0s .22s;padding:8px 16px calc(20px + env(safe-area-inset-bottom))}
 .hojaEd.on{transform:none;visibility:visible;transition:transform .22s ease-out}
-@media (prefers-reduced-motion:reduce){.hojaEd{transition:none}}
+@media (prefers-reduced-motion:reduce){.hojaEd,.hojaEd.on{transition:none}}
 .hojaEd .in{max-width:640px;margin:0 auto}
 .asa{width:44px;height:5px;border-radius:9px;background:var(--linea);margin:4px auto 10px}
 .edTit{display:flex;align-items:center;gap:10px}
-.edTit h3{margin:0;font-size:22px;flex:1}
+.edTit h3{margin:0;font-size:20px;flex:1}
 .cerrar{background:none;border:0;font-size:28px;line-height:1;color:var(--tinta2);min-width:48px;min-height:48px}
-
-.dictado{position:relative;margin-top:10px}
-.dictado textarea{min-height:120px;padding-right:76px;font-size:18px}
-.mic{position:absolute;right:8px;bottom:8px;width:60px;height:60px;border-radius:50%;
-  border:0;background:var(--verde);color:#fff;display:grid;place-items:center}
-.mic svg{width:28px;height:28px}
-.mic.oye{background:#B3261E;animation:latido 1.1s infinite}
-@keyframes latido{50%{box-shadow:0 0 0 10px rgba(179,38,30,.18)}}
-@media (prefers-reduced-motion:reduce){.mic.oye{animation:none}}
-.ayuda{font-size:14px;color:var(--tinta2);margin:6px 2px 0}
-
-.campos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 .campos .full{grid-column:1/-1}
 .estados{display:flex;flex-wrap:wrap;gap:6px}
 .estados button{min-height:42px;border-radius:99px;border:1.5px solid var(--linea);background:var(--hoja);padding:0 13px;font-size:15px}
 .estados button[aria-pressed=true]{background:var(--verde);border-color:var(--verde);color:#fff}
+.dicho{font-size:14px;color:var(--tinta2);background:var(--hoja);border-radius:10px;padding:8px 10px;margin-top:8px}
 
-.aviso{background:var(--alertaBg);color:#5A3800;border-radius:10px;padding:9px 12px;font-size:14px;margin-top:10px}
-.aviso:empty{display:none}
-
-/* registros */
-.reg{background:var(--hoja);border:1.5px solid var(--linea);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
-.reg.cargado{opacity:.6}
-.reg .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
-.reg .top b{font-size:18px}
-.reg .top span{color:var(--tinta2);font-size:14px}
-.reg .meta{margin-top:4px;font-size:15px}
-.reg .meta em{font-style:normal;background:var(--campo);border-radius:6px;padding:1px 7px;margin-right:4px}
-.reg .meta em.falta{background:var(--alertaBg);color:var(--alerta)}
-.reg p{margin:6px 0 0;font-size:15px}
-.reg .acc{display:flex;gap:8px;margin-top:8px}
-.reg .acc button{min-height:40px;border-radius:10px;border:1.5px solid var(--linea);background:var(--hoja);padding:0 12px;font-size:14px}
-.grupo{font-size:14px;color:var(--tinta2);margin:18px 0 8px;font-weight:600}
-.vacio{text-align:center;color:var(--tinta2);padding:28px 10px}
-
-pre.exp{white-space:pre-wrap;background:var(--hoja);border:1.5px solid var(--linea);border-radius:var(--r);padding:12px;font-size:13px;max-height:40vh;overflow:auto}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);
-  background:var(--tinta);color:#fff;padding:10px 16px;border-radius:10px;z-index:20;font-size:15px;display:none;max-width:90vw}
+pre.exp{white-space:pre-wrap;background:var(--hoja);border:1.5px solid var(--linea);border-radius:14px;padding:12px;font-size:13px;max-height:40vh;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--tinta);color:#fff;
+  padding:10px 16px;border-radius:10px;z-index:20;font-size:15px;display:none;max-width:90vw}
 .toast.on{display:block}
 [hidden]{display:none!important}
 </style>
@@ -138,28 +112,33 @@ pre.exp{white-space:pre-wrap;background:var(--hoja);border:1.5px solid var(--lin
 <header><div class="fila"><h1>Recorrida SOS</h1><span id="red" class="red">Con señal</span></div></header>
 
 <main class="wrap">
-  <!-- PESTAÑA RECORRIDA -->
   <section id="tab-recorrida">
     <div class="ctx">
-      <label class="c full">Fecha<input type="date" id="fecha"></label>
-      <label class="c">Empresa<select id="empresa"></select></label>
+      <label class="c">Fecha<input type="date" id="fecha"></label>
       <label class="c">Campo<select id="campo"></select></label>
     </div>
-    <h2 id="tituloLotes">Lotes</h2>
-    <div class="lotes" id="lotes"></div>
-    <div class="fila-btn">
-      <button class="btn" id="btnCorrido">Dictar varios lotes de corrido</button>
+
+    <div class="dict" id="dict">
+      <textarea id="texto" placeholder="Lote 5, soja de segunda, V2, bueno. Rama negra en cabeceras, aplicar 2,5 de glifo más 500 de 2,4D. Lote 10 y 11, soja de segunda, V1, muy bueno, limpio…"></textarea>
+      <div class="vivo" id="vivo"></div>
+      <div class="micFila">
+        <button class="mic" id="mic" aria-label="Empezar a dictar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
+        <div class="micTxt" id="micTxt"><b>Tocá para dictar</b>Decí “lote” y el número antes de cada lote. Hacé las pausas que quieras.</div>
+      </div>
     </div>
+    <div class="fila-btn">
+      <button class="btn pri" id="procesar" disabled>Procesar dictado</button>
+      <button class="btn" id="borrarTexto" hidden>Borrar texto</button>
+    </div>
+
+    <h2 id="tituloHoy">Registrados hoy en este campo</h2>
+    <div id="listaHoy"></div>
   </section>
 
-  <!-- PESTAÑA REGISTROS -->
-  <section id="tab-registros" hidden>
-    <div id="listaReg"></div>
-  </section>
+  <section id="tab-registros" hidden><div id="listaReg"></div></section>
 
-  <!-- PESTAÑA ENVIAR -->
   <section id="tab-enviar" hidden>
-    <h2>Registros pendientes de cargar en AppSheet</h2>
+    <h2>Pendientes de cargar en AppSheet</h2>
     <p class="ayuda" id="resumenEnviar"></p>
     <div class="fila-btn">
       <button class="btn pri" id="btnCopiar">Copiar recorrida</button>
@@ -180,55 +159,28 @@ pre.exp{white-space:pre-wrap;background:var(--hoja);border:1.5px solid var(--lin
   <button data-tab="enviar">Enviar <span class="badge" id="bdgEnv" hidden></span></button>
 </div></nav>
 
-<!-- EDITOR DE LOTE -->
 <div class="velo" id="velo"></div>
-<div class="hojaEd" id="editor" role="dialog" aria-modal="true" aria-labelledby="edLote">
+<div class="hojaEd" id="editor" role="dialog" aria-modal="true" aria-labelledby="edTit">
   <div class="in">
     <div class="asa"></div>
-    <div class="edTit"><h3 id="edLote">Lote</h3><button class="cerrar" id="edCerrar" aria-label="Cerrar">×</button></div>
-    <div class="campos" style="margin-top:4px">
-      <label class="c full" id="wrapLoteSel" hidden>Lote<select id="edLoteSel"></select></label>
-    </div>
-    <div class="dictado">
-      <textarea id="edDictado" placeholder="Ej: soja de segunda, V2, bueno. Rama negra en cabeceras, aplicar 2,5 de glifo más 500 de 2,4D"></textarea>
-      <button class="mic" id="edMic" aria-label="Dictar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
-    </div>
-    <p class="ayuda" id="edAyuda">Decí cultivo, estado fenológico y estado al principio; el resto queda como comentario.</p>
+    <div class="edTit"><h3 id="edTit">Corregir registro</h3><button class="cerrar" id="edCerrar" aria-label="Cerrar">×</button></div>
     <div class="campos">
+      <label class="c full">Lote<select id="edLote"></select></label>
       <label class="c">Cultivo<select id="edCultivo"></select></label>
       <label class="c">Estado fenológico<input type="text" id="edEF" list="dlEF" autocomplete="off" placeholder="V4, R3, Z 3.2…"></label>
       <div class="c full"><span>Estado</span><div class="estados" id="edEstado"></div></div>
       <label class="c full">Comentarios<textarea id="edComent" rows="4"></textarea></label>
     </div>
     <datalist id="dlEF"></datalist>
-    <div class="aviso" id="edAviso"></div>
-    <div class="fila-btn">
-      <button class="btn pri" id="edGuardar">Guardar</button>
-      <button class="btn" id="edGuardarSig">Guardar y seguir</button>
-    </div>
-    <div class="fila-btn"><button class="btn peligro" id="edBorrar" hidden>Borrar registro</button></div>
-  </div>
-</div>
-
-<!-- DICTADO DE CORRIDO -->
-<div class="hojaEd" id="corrido" role="dialog" aria-modal="true" aria-labelledby="cTit">
-  <div class="in">
-    <div class="asa"></div>
-    <div class="edTit"><h3 id="cTit">Varios lotes</h3><button class="cerrar" id="cCerrar" aria-label="Cerrar">×</button></div>
-    <p class="ayuda">Empezá cada lote diciendo “lote” y su número. Ej: “Lote 5, soja de segunda, V2, bueno, rama negra en cabecera. Lote 10 y 11, soja de segunda, V1, muy bueno, limpio.”</p>
-    <div class="dictado">
-      <textarea id="cTexto" style="min-height:200px"></textarea>
-      <button class="mic" id="cMic" aria-label="Dictar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
-    </div>
-    <div class="aviso" id="cAviso"></div>
-    <div class="fila-btn"><button class="btn pri bloque" id="cSeparar">Separar por lote y guardar</button></div>
+    <div class="dicho" id="edDicho"></div>
+    <div class="fila-btn"><button class="btn pri" id="edGuardar">Guardar cambios</button></div>
+    <div class="fila-btn"><button class="btn peligro" id="edBorrar">Borrar registro</button></div>
   </div>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
 
 <script>
-/* ======== DATOS (extraídos de SOS Agro App, vista Monitoreo, 05/11/2026) ======== */
 const DATOS = {
   "C4": {
     "Don_Manuel": ["DM_1y3","DM_2y4","DM_5","DM_1-2-3-4"],
@@ -258,21 +210,6 @@ const FINA = ["Trigo","Cebada","Centeno","Avena","Triticale"];
 const EF_GRUESA = ["Barbecho","Sembrado","Ve","Vc",...Array.from({length:13},(_,i)=>"V"+(i+1)),"R1","R2","R3","R4","R5","R5.1","R5.2","R5.3","R5.4","R5.5","R6","R7","R8"];
 const EF_FINA = ["Barbecho","Sembrado",...[1,2,3,4,5,6,7,8,9].flatMap(a=>[0,1,2,3,4,5,6,7,8,9].map(b=>`Z ${a}.${b}`))];
 
-/* ======== ESTADO ======== */
-const KEY="recorridaSOS.v1";
-let S = cargar();
-function cargar(){
-  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.registros) return s; }catch(e){}
-  return {ctx:{empresa:"C4",campo:"Santa_Margarita"}, registros:[], ultimoCultivo:{}};
-}
-function guardar(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("No se pudo guardar en el teléfono"); } }
-if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
-
-const $=id=>document.getElementById(id);
-const hoy=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);};
-const fechaAR=iso=>{const [y,m,d]=iso.split("-");return `${+d}/${+m}/${y}`;};
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2600);}
 
 /* ======== INTÉRPRETE DEL DICTADO ======== */
 const sinTilde=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"");
@@ -370,210 +307,192 @@ function buscarLote(tokens, lotes){
   return null;
 }
 
-/* ======== UI: contexto ======== */
-function llenarSelect(sel, opciones, valor){
-  sel.innerHTML=opciones.map(o=>`<option value="${o}">${o.replace(/_/g," ")}</option>`).join("");
-  if(valor && opciones.includes(valor)) sel.value=valor;
-}
+
+
+/* ======== ESTADO ======== */
+const KEY="recorridaSOS.v1";
+let S=(()=>{try{const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.registros) return s;}catch(e){} return {ctx:{},registros:[],ultimoCultivo:{}};})();
+S.ctx=S.ctx||{}; S.ultimoCultivo=S.ultimoCultivo||{};
+function guardar(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast("No se pudo guardar en el teléfono");}}
+if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+const $=id=>document.getElementById(id);
+const hoy=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);};
+const fechaAR=iso=>{const [y,m,d]=iso.split("-");return `${+d}/${+m}/${y}`;};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const bonito=s=>s.replace(/_/g," ");
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2800);}
+function empresaDe(campo){return Object.keys(DATOS).find(e=>DATOS[e][campo]);}
+function faltas(r){const f=[]; if(!r.loteOk) f.push("lote"); if(!r.cultivo) f.push("cultivo"); if(!r.ef) f.push("EF"); return f;}
+
+/* ======== CONTEXTO: fecha y campo ======== */
 function initCtx(){
-  $("fecha").value=S.ctx.fecha&&S.ctx.fechaGuardada===hoy()?S.ctx.fecha:hoy();
-  llenarSelect($("empresa"),Object.keys(DATOS),S.ctx.empresa);
-  llenarSelect($("campo"),Object.keys(DATOS[$("empresa").value]),S.ctx.campo);
-  dibujarLotes();
+  $("fecha").value=(S.ctx.fecha&&S.ctx.dia===hoy())?S.ctx.fecha:hoy();
+  $("campo").innerHTML=Object.entries(DATOS).map(([e,cs])=>`<optgroup label="${e}">`+Object.keys(cs).map(c=>`<option value="${c}">${bonito(c)}</option>`).join("")+`</optgroup>`).join("");
+  if(S.ctx.campo&&empresaDe(S.ctx.campo)) $("campo").value=S.ctx.campo;
+  $("texto").value=S.borrador||""; estadoBotones();
 }
-$("fecha").onchange=()=>{S.ctx.fecha=$("fecha").value;S.ctx.fechaGuardada=hoy();guardar();dibujarLotes();};
-$("empresa").onchange=()=>{S.ctx.empresa=$("empresa").value;llenarSelect($("campo"),Object.keys(DATOS[S.ctx.empresa]));S.ctx.campo=$("campo").value;guardar();dibujarLotes();};
-$("campo").onchange=()=>{S.ctx.campo=$("campo").value;guardar();dibujarLotes();};
+$("fecha").onchange=()=>{S.ctx.fecha=$("fecha").value;S.ctx.dia=hoy();guardar();dibujarHoy();};
+$("campo").onchange=()=>{S.ctx.campo=$("campo").value;guardar();dibujarHoy();};
 
-const lotesActuales=()=>DATOS[$("empresa").value][$("campo").value]||[];
-function regDe(lote){return S.registros.find(r=>r.fecha===$("fecha").value&&r.empresa===$("empresa").value&&r.campo===$("campo").value&&r.lote===lote);}
-function dibujarLotes(){
-  const ls=lotesActuales(); const hechos=ls.filter(l=>regDe(l)).length;
-  $("tituloLotes").textContent=`Lotes de ${$("campo").value.replace(/_/g," ")} · ${hechos} de ${ls.length} recorridos`;
-  $("lotes").innerHTML=ls.map(l=>{const r=regDe(l);
-    return `<button class="lote${r?" hecho":""}" data-lote="${l}"><b>${l}</b>${r?`<small>${[r.cultivo,r.ef,r.estado].filter(Boolean).join(" · ")}</small>`:(S.ultimoCultivo[l]?`<small>${S.ultimoCultivo[l]}</small>`:"")}</button>`;}).join("");
-  actualizarBadges();
+/* ======== DICTADO (no se corta: reinicia solo hasta que lo apagues) ======== */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, oyendo=false;
+function estadoMic(on){
+  oyendo=on; $("mic").classList.toggle("oye",on); $("dict").classList.toggle("oyendo",on);
+  $("mic").setAttribute("aria-label",on?"Dejar de dictar":"Empezar a dictar");
+  $("micTxt").innerHTML=on?"<b>Escuchando…</b>Tocá de nuevo cuando termines la recorrida.":"<b>Tocá para dictar</b>Decí “lote” y el número antes de cada lote. Hacé las pausas que quieras.";
+  if(!on) $("vivo").textContent="";
 }
-$("lotes").onclick=e=>{const b=e.target.closest(".lote"); if(b) abrirEditor({lote:b.dataset.lote});};
+function agregarTexto(t){t=t.trim(); if(!t) return; const ta=$("texto"); ta.value=(ta.value.replace(/\s+$/,"")+(ta.value.trim()?" ":"")+t); guardarBorrador(); ta.scrollTop=ta.scrollHeight;}
+function arrancar(){
+  rec=new SR(); rec.lang="es-AR"; rec.continuous=true; rec.interimResults=true;
+  rec.onresult=e=>{let vivo="";for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i]; if(r.isFinal) agregarTexto(r[0].transcript); else vivo+=r[0].transcript;} $("vivo").textContent=vivo;};
+  rec.onerror=e=>{ if(e.error==="network"||e.error==="service-not-allowed"){ detener(); $("texto").focus(); toast("Sin señal: usá el micrófono del teclado"); }
+                   else if(e.error==="not-allowed"){ detener(); toast("Permití el micrófono para esta app"); } };
+  rec.onend=()=>{ if(oyendo){ setTimeout(()=>{ if(oyendo){ try{arrancar();}catch(e){} } },200); } };
+  try{rec.start();}catch(e){}
+}
+function detener(){estadoMic(false); if(rec){rec.onend=null; try{rec.stop();}catch(e){}} rec=null;}
+$("mic").onclick=()=>{
+  if(oyendo){detener();return;}
+  if(!SR||!navigator.onLine){ $("texto").focus(); toast(navigator.onLine?"Usá el micrófono del teclado":"Sin señal: usá el micrófono del teclado"); return; }
+  estadoMic(true); arrancar();
+};
+function guardarBorrador(){S.borrador=$("texto").value; guardar(); estadoBotones();}
+$("texto").addEventListener("input",guardarBorrador);
+function estadoBotones(){const hay=!!$("texto").value.trim(); $("procesar").disabled=!hay; $("borrarTexto").hidden=!hay;}
+$("borrarTexto").onclick=()=>{ if(!confirm("¿Borrar todo el texto dictado sin procesar?")) return; detener(); $("texto").value=""; guardarBorrador(); };
 
-/* ======== EDITOR ======== */
-let edActual=null;
-llenarSelect($("edCultivo"),["",...CULTIVOS]); $("edCultivo").options[0].textContent="—";
+/* ======== PROCESAR ======== */
+const SALTEAR=new Set(["numero","nro","n","n°","no","nº"]);
+function procesar(){
+  detener();
+  const campo=$("campo").value, empresa=empresaDe(campo), lotes=DATOS[empresa][campo];
+  const toks=$("texto").value.trim().split(/\s+/).filter(Boolean);
+  const partes=[]; let act=null;
+  for(let i=0;i<toks.length;i++){
+    if(normTok(toks[i])==="lote"){
+      let j=i+1; while(j<toks.length&&SALTEAR.has(normTok(toks[j]))) j++;
+      const b=buscarLote(toks.slice(j),lotes);
+      if(b){act={lote:b.lotes[0],loteOk:true,dicho:"",toks:[]};partes.push(act);i=j+b.usados-1;continue;}
+      /* "lote" + número que no existe en este campo: lo guardo marcado para corregir.
+         Si después de "lote" no viene un número ("lote limpio"), es parte del comentario. */
+      if(j<toks.length && /^\d/.test(normTok(toks[j]))){
+        act={lote:"",loteOk:false,dicho:toks[j].replace(/[,.;:]+$/,""),toks:[]};partes.push(act);i=j;continue;
+      }
+    }
+    if(!act){act={lote:"",loteOk:false,dicho:"(sin lote)",toks:[]};partes.push(act);}
+    act.toks.push(toks[i]);
+  }
+  let n=0,rev=0;
+  partes.forEach(p=>{
+    const txt=p.toks.join(" ").trim(); if(!txt&&!p.lote) return;
+    const d=interpretar(txt);
+    const r={id:uid(),fecha:$("fecha").value,empresa,campo,lote:p.lote,loteOk:p.loteOk,loteDicho:p.dicho,
+      cultivo:d.cultivo||(p.lote&&S.ultimoCultivo[p.lote])||"",ef:d.ef||"",estado:d.estado||"",comentario:d.comentario,
+      dictado:(p.loteOk?"Lote "+p.lote+": ":"")+txt,carga:"pendiente",creado:Date.now()};
+    if(r.cultivo&&r.lote) S.ultimoCultivo[r.lote]=r.cultivo;
+    S.registros.push(r); n++; if(faltas(r).length) rev++;
+  });
+  $("texto").value=""; guardarBorrador(); dibujarHoy(); actualizarBadges();
+  toast(n?`${n} registro${n>1?"s":""} guardado${n>1?"s":""}`+(rev?` · ${rev} para revisar`:""):"No encontré nada para guardar");
+}
+$("procesar").onclick=procesar;
+
+/* ======== LISTAS ======== */
+function tarjeta(r,conFecha){
+  const f=faltas(r);
+  const lote=r.loteOk?r.lote:`Lote sin reconocer${r.loteDicho?` (“${esc(r.loteDicho)}”)`:""}`;
+  return `<button class="reg${f.length?" revisar":""}${r.carga==="cargado"?" cargado":""}" data-id="${r.id}">
+    <div class="top"><b>${lote}</b><span>${r.carga==="cargado"?"Cargado":(f.length?"Revisar":"Listo")}</span></div>
+    <div class="meta"><em class="${r.cultivo?"":"falta"}">${esc(r.cultivo)||"falta cultivo"}</em><em class="${r.ef?"":"falta"}">${esc(r.ef)||"falta EF"}</em>${r.estado?`<em>${esc(r.estado)}</em>`:""}</div>
+    ${r.comentario?`<p>${esc(r.comentario)}</p>`:""}</button>`;
+}
+function ordenar(a){return a.sort((x,y)=>y.fecha.localeCompare(x.fecha)||x.campo.localeCompare(y.campo)||(x.lote||"~").localeCompare(y.lote||"~",undefined,{numeric:true})||x.creado-y.creado);}
+function dibujarHoy(){
+  const regs=ordenar(S.registros.filter(r=>r.fecha===$("fecha").value&&r.campo===$("campo").value));
+  $("tituloHoy").textContent=`${bonito($("campo").value)} · ${fechaAR($("fecha").value)} · ${regs.length} registro${regs.length===1?"":"s"}`;
+  const rev=regs.filter(r=>faltas(r).length).length;
+  $("listaHoy").innerHTML=(rev?`<div class="resumenRev">${rev} para revisar: tocá la tarjeta para completar lo que falta.</div>`:"")+
+    (regs.length?regs.map(r=>tarjeta(r)).join(""):`<p class="vacio">Todavía no hay registros de este campo para esta fecha.</p>`);
+}
+function dibujarRegistros(){
+  const regs=ordenar([...S.registros]);
+  if(!regs.length){$("listaReg").innerHTML=`<p class="vacio">Todavía no hay registros.</p>`;return;}
+  let html="",g="";
+  regs.forEach(r=>{const gg=`${fechaAR(r.fecha)} · ${r.empresa} · ${bonito(r.campo)}`; if(gg!==g){g=gg;html+=`<div class="grupo">${gg}</div>`;} html+=tarjeta(r);});
+  $("listaReg").innerHTML=html;
+}
+["listaHoy","listaReg"].forEach(id=>$(id).onclick=e=>{const b=e.target.closest(".reg"); if(b) abrirEditor(b.dataset.id);});
+
+/* ======== EDITOR (solo para corregir) ======== */
+let edId=null;
+$("edCultivo").innerHTML=`<option value="">—</option>`+CULTIVOS.map(c=>`<option>${c}</option>`).join("");
 $("edEstado").innerHTML=ESTADOS.map(e=>`<button type="button" aria-pressed="false" data-v="${e}">${e}</button>`).join("");
 $("edEstado").onclick=e=>{const b=e.target.closest("button"); if(!b) return; const on=b.getAttribute("aria-pressed")!=="true";
   [...$("edEstado").children].forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed",on);};
 const estadoSel=()=>{const b=[...$("edEstado").children].find(x=>x.getAttribute("aria-pressed")==="true");return b?b.dataset.v:"";};
-const setEstado=v=>[...$("edEstado").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===v));
-function listaEF(){const c=$("edCultivo").value; $("dlEF").innerHTML=(FINA.includes(c)?EF_FINA:EF_GRUESA).map(v=>`<option value="${v}">`).join("");}
+function listaEF(){$("dlEF").innerHTML=(FINA.includes($("edCultivo").value)?EF_FINA:EF_GRUESA).map(v=>`<option value="${v}">`).join("");}
 $("edCultivo").onchange=listaEF;
-
-function abrirEditor({lote, reg}){
-  const r=reg||regDe(lote);
-  edActual={id:r?r.id:null, lote:r?r.lote:lote};
-  $("edLote").textContent=edActual.lote||"Elegí el lote";
-  $("wrapLoteSel").hidden=!!edActual.lote;
-  if(!edActual.lote) llenarSelect($("edLoteSel"),lotesActuales());
-  $("edDictado").value=r?r.dictado||"":"";
-  $("edCultivo").value=r?r.cultivo||"":(S.ultimoCultivo[lote]||"");
-  $("edEF").value=r?r.ef||"":""; setEstado(r?r.estado:"");
-  $("edComent").value=r?r.comentario||"":"";
-  $("edBorrar").hidden=!r; $("edAviso").textContent="";
-  listaEF(); abrirHoja("editor");
-  if(!r) setTimeout(()=>$("edDictado").focus(),250);
+function abrirEditor(id){
+  const r=S.registros.find(x=>x.id===id); if(!r) return; edId=id;
+  const ls=DATOS[r.empresa][r.campo]||[];
+  $("edLote").innerHTML=(r.loteOk?"":`<option value="">Elegí el lote${r.loteDicho?` (dijiste “${esc(r.loteDicho)}”)`:""}</option>`)+ls.map(l=>`<option>${l}</option>`).join("");
+  $("edLote").value=r.loteOk?r.lote:"";
+  $("edCultivo").value=r.cultivo||""; $("edEF").value=r.ef||"";
+  [...$("edEstado").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===r.estado));
+  $("edComent").value=r.comentario||""; $("edDicho").textContent="Dictado original: "+(r.dictado||"—");
+  $("edTit").textContent=`${bonito(r.campo)} · ${fechaAR(r.fecha)}`;
+  listaEF(); $("velo").classList.add("on"); $("editor").classList.add("on");
 }
-let timerInt;
-$("edDictado").addEventListener("input",()=>{clearTimeout(timerInt);timerInt=setTimeout(aplicarDictado,350);});
-function aplicarDictado(){
-  const t=$("edDictado").value; const p=interpretar(t);
-  if(p.cultivo) $("edCultivo").value=p.cultivo;
-  if(p.ef) $("edEF").value=p.ef;
-  if(p.estado) setEstado(p.estado);
-  $("edComent").value=p.comentario;
-  listaEF(); validar();
-}
-function validar(){
-  const f=[]; if(!$("edEF").value.trim()) f.push("estado fenológico (obligatorio en AppSheet)");
-  if(!$("edCultivo").value) f.push("cultivo");
-  $("edAviso").textContent=f.length?"Falta: "+f.join(" y ")+".":"";
-}
-["edEF","edCultivo"].forEach(id=>$(id).addEventListener("change",validar));
-function guardarEditor(){
-  const lote=edActual.lote||$("edLoteSel").value;
-  if(!lote){toast("Elegí el lote");return false;}
-  const datos={fecha:$("fecha").value,empresa:$("empresa").value,campo:$("campo").value,lote,
-    cultivo:$("edCultivo").value,ef:$("edEF").value.trim(),estado:estadoSel(),comentario:$("edComent").value.trim(),
-    dictado:$("edDictado").value.trim(),carga:"pendiente",modificado:Date.now()};
-  if(!datos.ef&&!datos.comentario&&!datos.cultivo){toast("No hay nada para guardar");return false;}
-  if(edActual.id){const i=S.registros.findIndex(r=>r.id===edActual.id); S.registros[i]={...S.registros[i],...datos};}
-  else{const prev=regDe(lote); if(prev) Object.assign(prev,datos); else S.registros.push({id:uid(),...datos});}
-  if(datos.cultivo) S.ultimoCultivo[lote]=datos.cultivo;
-  guardar(); dibujarLotes(); dibujarRegistros(); toast(`Guardado ${lote}`); return true;
-}
-$("edGuardar").onclick=()=>{if(guardarEditor()) cerrarHojas();};
-$("edGuardarSig").onclick=()=>{
-  const actual=edActual.lote; if(!guardarEditor()) return;
-  const ls=lotesActuales(); const sig=ls.slice(ls.indexOf(actual)+1).find(l=>!regDe(l))||ls.find(l=>!regDe(l));
-  if(sig) abrirEditor({lote:sig}); else {cerrarHojas(); toast("Recorriste todos los lotes del campo");}
+function cerrarEditor(){$("velo").classList.remove("on");$("editor").classList.remove("on");}
+$("edCerrar").onclick=cerrarEditor; $("velo").onclick=cerrarEditor;
+$("edGuardar").onclick=()=>{
+  const r=S.registros.find(x=>x.id===edId); const l=$("edLote").value;
+  Object.assign(r,{lote:l,loteOk:!!l,cultivo:$("edCultivo").value,ef:$("edEF").value.trim(),estado:estadoSel(),comentario:$("edComent").value.trim(),carga:r.carga==="cargado"?"pendiente":r.carga});
+  if(r.cultivo&&r.lote) S.ultimoCultivo[r.lote]=r.cultivo;
+  guardar(); cerrarEditor(); refrescar(); toast("Cambios guardados");
 };
-$("edBorrar").onclick=()=>{ if(!confirm("¿Borrar este registro?")) return;
-  S.registros=S.registros.filter(r=>r.id!==edActual.id); guardar(); cerrarHojas(); dibujarLotes(); dibujarRegistros(); toast("Registro borrado"); };
-$("edCerrar").onclick=cerrarHojas; $("velo").onclick=cerrarHojas;
-
-function abrirHoja(id){$("velo").classList.add("on");$(id).classList.add("on");}
-function cerrarHojas(){detenerMic();["editor","corrido"].forEach(i=>$(i).classList.remove("on"));$("velo").classList.remove("on");}
-
-/* ======== DICTADO DE CORRIDO ======== */
-$("btnCorrido").onclick=()=>{$("cAviso").textContent="";abrirHoja("corrido");setTimeout(()=>$("cTexto").focus(),250);};
-$("cCerrar").onclick=cerrarHojas;
-$("cSeparar").onclick=()=>{
-  const ls=lotesActuales(); const toks=$("cTexto").value.trim().split(/\s+/).filter(Boolean);
-  const partes=[]; let act=null;
-  for(let i=0;i<toks.length;i++){
-    if(normTok(toks[i])==="lote"){
-      const b=buscarLote(toks.slice(i+1),ls);
-      if(b){ act={lotes:b.lotes,toks:[]}; partes.push(act); i+=b.usados; continue; }
-    }
-    if(act) act.toks.push(toks[i]);
-  }
-  if(!partes.length){$("cAviso").textContent="No encontré ningún lote. Empezá cada uno con “lote” y su número, por ejemplo “lote 5”.";return;}
-  const avisos=[]; let n=0;
-  partes.forEach(p=>{
-    const lote=p.lotes[0]; if(p.lotes.length>1) avisos.push(`“${p.lotes.join(" / ")}” coinciden; usé ${lote}`);
-    const d=interpretar(p.toks.join(" "));
-    const datos={fecha:$("fecha").value,empresa:$("empresa").value,campo:$("campo").value,lote,
-      cultivo:d.cultivo||S.ultimoCultivo[lote]||"",ef:d.ef||"",estado:d.estado||"",comentario:d.comentario,dictado:p.toks.join(" "),carga:"pendiente",modificado:Date.now()};
-    const prev=regDe(lote); if(prev) Object.assign(prev,datos); else S.registros.push({id:uid(),...datos});
-    if(datos.cultivo) S.ultimoCultivo[lote]=datos.cultivo; if(!datos.ef) avisos.push(`${lote}: falta estado fenológico`); n++;
-  });
-  guardar(); dibujarLotes(); dibujarRegistros();
-  if(avisos.length){$("cAviso").textContent=`Guardé ${n} lotes. Revisá: `+avisos.join("; ")+".";}
-  else{cerrarHojas(); toast(`Guardé ${n} lotes`);} $("cTexto").value="";
-};
-
-/* ======== MICRÓFONO ======== */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let rec=null, micBtn=null;
-function detenerMic(){ if(rec){try{rec.stop();}catch(e){} } if(micBtn) micBtn.classList.remove("oye"); rec=null; micBtn=null; }
-function usarMic(btn, ta, alTerminar){
-  if(rec){detenerMic();return;}
-  if(!SR || !navigator.onLine){
-    ta.focus();
-    toast(navigator.onLine?"Usá el micrófono del teclado":"Sin señal: usá el micrófono del teclado");
-    return;
-  }
-  rec=new SR(); rec.lang="es-AR"; rec.interimResults=false; rec.continuous=true; micBtn=btn; btn.classList.add("oye");
-  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++) if(e.results[i].isFinal){
-      ta.value=(ta.value.trim()+" "+e.results[i][0].transcript.trim()).trim(); alTerminar&&alTerminar();}};
-  rec.onerror=()=>{detenerMic(); ta.focus(); toast("El dictado falló: usá el micrófono del teclado");};
-  rec.onend=()=>detenerMic();
-  try{rec.start();}catch(e){detenerMic();}
-}
-$("edMic").onclick=()=>usarMic($("edMic"),$("edDictado"),aplicarDictado);
-$("cMic").onclick=()=>usarMic($("cMic"),$("cTexto"));
-
-/* ======== REGISTROS ======== */
-function dibujarRegistros(){
-  const regs=[...S.registros].sort((a,b)=>b.fecha.localeCompare(a.fecha)||a.campo.localeCompare(b.campo)||a.lote.localeCompare(b.lote,undefined,{numeric:true}));
-  if(!regs.length){$("listaReg").innerHTML=`<p class="vacio">Todavía no hay registros. Tocá un lote en Recorrida para empezar.</p>`;actualizarBadges();return;}
-  let html="",g="";
-  regs.forEach(r=>{const gg=`${fechaAR(r.fecha)} · ${r.empresa} · ${r.campo.replace(/_/g," ")}`;
-    if(gg!==g){g=gg;html+=`<div class="grupo">${gg}</div>`;}
-    html+=`<div class="reg${r.carga==="cargado"?" cargado":""}">
-      <div class="top"><b>${r.lote}</b><span>${r.carga==="cargado"?"Cargado en AppSheet":"Pendiente"}</span></div>
-      <div class="meta"><em class="${r.cultivo?"":"falta"}">${r.cultivo||"sin cultivo"}</em><em class="${r.ef?"":"falta"}">${r.ef||"sin EF"}</em>${r.estado?`<em>${r.estado}</em>`:""}</div>
-      ${r.comentario?`<p>${esc(r.comentario)}</p>`:""}
-      <div class="acc"><button data-ed="${r.id}">Editar</button>${r.carga==="cargado"?`<button data-pend="${r.id}">Volver a pendiente</button>`:""}</div></div>`;});
-  $("listaReg").innerHTML=html; actualizarBadges();
-}
-const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-$("listaReg").onclick=e=>{
-  const ed=e.target.dataset.ed, pe=e.target.dataset.pend;
-  if(ed){const r=S.registros.find(x=>x.id===ed);
-    $("fecha").value=r.fecha; $("empresa").value=r.empresa; llenarSelect($("campo"),Object.keys(DATOS[r.empresa]),r.campo);
-    abrirEditor({reg:r});}
-  if(pe){S.registros.find(x=>x.id===pe).carga="pendiente";guardar();dibujarRegistros();}
-};
+$("edBorrar").onclick=()=>{ if(!confirm("¿Borrar este registro?")) return; S.registros=S.registros.filter(x=>x.id!==edId); guardar(); cerrarEditor(); refrescar(); toast("Registro borrado"); };
 
 /* ======== ENVIAR ======== */
-const pendientes=()=>S.registros.filter(r=>r.carga!=="cargado").sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.campo.localeCompare(b.campo)||a.lote.localeCompare(b.lote,undefined,{numeric:true}));
+const pendientes=()=>S.registros.filter(r=>r.carga!=="cargado").sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.campo.localeCompare(b.campo)||(a.lote||"~").localeCompare(b.lote||"~",undefined,{numeric:true}));
 function textoExport(){
   const p=pendientes(); if(!p.length) return "";
   const l=[`RECORRIDA SOS – cargar en AppSheet (Monitoreo) – ${p.length} registro${p.length>1?"s":""}`];
   p.forEach((r,i)=>{l.push("---");
-    l.push(`${i+1}) Fecha: ${fechaAR(r.fecha)} | Empresa: ${r.empresa} | Campo: ${r.campo} | Lote: ${r.lote} | Cultivo: ${r.cultivo||"-"} | EF: ${r.ef||"FALTA"} | Estado: ${r.estado||"-"}`);
+    l.push(`${i+1}) Fecha: ${fechaAR(r.fecha)} | Empresa: ${r.empresa} | Campo: ${r.campo} | Lote: ${r.loteOk?r.lote:"FALTA (dijo: "+(r.loteDicho||"-")+")"} | Cultivo: ${r.cultivo||"FALTA"} | EF: ${r.ef||"FALTA"} | Estado: ${r.estado||"-"}`);
     l.push(`Comentarios: ${(r.comentario||"").replace(/\|/g,"/")}`);});
   return l.join("\n");
 }
 function dibujarEnviar(){
-  const p=pendientes(); const t=textoExport();
-  const faltan=p.filter(r=>!r.ef).length;
-  $("resumenEnviar").textContent=p.length?`${p.length} pendiente${p.length>1?"s":""}.`+(faltan?` ${faltan} sin estado fenológico: completalos antes de enviar.`:" Copiá la recorrida y pegala en el chat con Claude para cargarla."):"No hay registros pendientes.";
-  $("preview").textContent=t||"—";
+  const p=pendientes(), rev=p.filter(r=>faltas(r).length).length;
+  $("resumenEnviar").textContent=p.length?`${p.length} pendiente${p.length>1?"s":""}.`+(rev?` ${rev} con datos faltantes: podés completarlos antes o enviarlos igual y los resolvemos al cargar.`:" Copiá la recorrida y pegala en el chat con Claude para cargarla."):"No hay registros pendientes.";
+  $("preview").textContent=textoExport()||"—";
   ["btnCopiar","btnCompartir","btnCSV","btnMarcar"].forEach(id=>$(id).disabled=!p.length);
 }
 $("btnCopiar").onclick=async()=>{const t=textoExport();
-  try{await navigator.clipboard.writeText(t);toast("Recorrida copiada");}
-  catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("Recorrida copiada");}};
-$("btnCompartir").onclick=async()=>{const t=textoExport();
-  if(navigator.share){try{await navigator.share({title:"Recorrida SOS",text:t});}catch(e){}} else $("btnCopiar").click();};
-$("btnCSV").onclick=()=>{
-  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
-  const filas=[["Fecha","Empresa","Campo","Lote","Cultivo","EF","Estado","Comentarios"],...pendientes().map(r=>[fechaAR(r.fecha),r.empresa,r.campo,r.lote,r.cultivo,r.ef,r.estado,r.comentario])];
+  try{await navigator.clipboard.writeText(t);}catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
+  toast("Recorrida copiada");};
+$("btnCompartir").onclick=async()=>{const t=textoExport(); if(navigator.share){try{await navigator.share({title:"Recorrida SOS",text:t});}catch(e){}} else $("btnCopiar").click();};
+$("btnCSV").onclick=()=>{const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const filas=[["Fecha","Empresa","Campo","Lote","Cultivo","EF","Estado","Comentarios"],...pendientes().map(r=>[fechaAR(r.fecha),r.empresa,r.campo,r.loteOk?r.lote:"",r.cultivo,r.ef,r.estado,r.comentario])];
   const blob=new Blob(["﻿"+filas.map(f=>f.map(q).join(";")).join("\r\n")],{type:"text/csv"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`recorrida_${hoy()}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);};
-$("btnMarcar").onclick=()=>{const p=pendientes(); if(!confirm(`¿Marcar ${p.length} registros como cargados en AppSheet?`)) return;
-  p.forEach(r=>r.carga="cargado"); guardar(); dibujarRegistros(); dibujarEnviar(); toast("Marcados como cargados");};
+$("btnMarcar").onclick=()=>{const p=pendientes(); if(!confirm(`¿Marcar ${p.length} registros como cargados en AppSheet?`)) return; p.forEach(r=>r.carga="cargado"); guardar(); refrescar(); toast("Marcados como cargados");};
 
-/* ======== PESTAÑAS, BADGES, RED ======== */
+/* ======== PESTAÑAS ======== */
+let tab="recorrida";
 document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("nav button").forEach(x=>x.removeAttribute("aria-current")); b.setAttribute("aria-current","page");
-  ["recorrida","registros","enviar"].forEach(t=>$("tab-"+t).hidden=t!==b.dataset.tab);
-  if(b.dataset.tab==="registros") dibujarRegistros(); if(b.dataset.tab==="enviar") dibujarEnviar(); scrollTo(0,0);});
-function actualizarBadges(){const n=pendientes().length;
-  [$("bdgReg"),$("bdgEnv")].forEach(e=>{e.textContent=n;e.hidden=!n;});}
+  tab=b.dataset.tab; ["recorrida","registros","enviar"].forEach(t=>$("tab-"+t).hidden=t!==tab); refrescar(); scrollTo(0,0);});
+function actualizarBadges(){const n=pendientes().length; [$("bdgReg"),$("bdgEnv")].forEach(e=>{e.textContent=n;e.hidden=!n;});}
+function refrescar(){dibujarHoy(); if(tab==="registros") dibujarRegistros(); if(tab==="enviar") dibujarEnviar(); actualizarBadges();}
 function red(){const on=navigator.onLine;$("red").textContent=on?"Con señal":"Sin señal";$("red").classList.toggle("sin",!on);}
 addEventListener("online",red);addEventListener("offline",red);red();
 
-initCtx(); dibujarRegistros();
+initCtx(); refrescar();
 if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 </script>
 </body>
