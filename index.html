@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F5A2C">
+<title>Recorrida SOS</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --campo:#E9EFE6;      /* fondo */
+  --hoja:#FFFFFF;       /* superficies */
+  --tinta:#16281C;      /* texto */
+  --tinta2:#4E6355;     /* texto secundario */
+  --verde:#1F5A2C;      /* acento SOS */
+  --verde2:#2F7A3B;
+  --brote:#D7E8CF;      /* lote recorrido */
+  --linea:#C9D5C4;
+  --alerta:#A8620A;
+  --alertaBg:#FBEFD9;
+  --error:#A3281E;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--campo);color:var(--tinta);
+  font:17px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--verde2);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+
+/* cabecera */
+header{position:sticky;top:0;z-index:5;background:var(--verde);color:#fff;
+  padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
+header .fila{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:12px}
+header h1{font-size:20px;margin:0;font-weight:700;letter-spacing:-.01em;flex:1}
+.red{font-size:13px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,.16)}
+.red.sin{background:#F3C969;color:#3A2A00}
+
+/* contexto */
+.ctx{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0 8px}
+.ctx .full{grid-column:1/-1}
+label.c{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--tinta2)}
+select,input[type=date],input[type=text],textarea{
+  width:100%;background:var(--hoja);border:1.5px solid var(--linea);border-radius:10px;
+  padding:11px 12px;min-height:48px;color:var(--tinta)}
+textarea{resize:vertical}
+
+h2{font-size:16px;margin:22px 0 10px;color:var(--tinta2);font-weight:600}
+
+/* grilla de lotes */
+.lotes{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.lote{min-height:58px;border-radius:12px;border:1.5px solid var(--linea);background:var(--hoja);
+  padding:6px 8px;text-align:left;display:flex;flex-direction:column;justify-content:center;line-height:1.2}
+.lote b{font-size:16px;font-weight:650;word-break:break-word}
+.lote small{font-size:12px;color:var(--tinta2);margin-top:2px}
+.lote.hecho{background:var(--brote);border-color:var(--verde2)}
+.lote.hecho b::after{content:" ✓";color:var(--verde)}
+
+/* botones */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;
+  border-radius:12px;border:1.5px solid var(--verde);background:var(--hoja);color:var(--verde);
+  padding:0 18px;font-weight:650}
+.btn.pri{background:var(--verde);color:#fff}
+.btn.peligro{border-color:var(--error);color:var(--error)}
+.btn.bloque{width:100%}
+.btn:disabled{opacity:.45}
+.fila-btn{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.fila-btn .btn{flex:1 1 140px}
+
+/* pestañas inferiores */
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--hoja);border-top:1.5px solid var(--linea);
+  padding-bottom:env(safe-area-inset-bottom)}
+nav .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+nav button{background:none;border:0;min-height:62px;font-size:15px;color:var(--tinta2);font-weight:600;position:relative}
+nav button[aria-current=page]{color:var(--verde)}
+nav button[aria-current=page]::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;background:var(--verde);border-radius:0 0 3px 3px}
+.badge{display:inline-block;min-width:22px;padding:0 6px;border-radius:99px;background:var(--verde);color:#fff;font-size:12px;line-height:20px;margin-left:4px}
+
+/* editor (hoja inferior) */
+.velo{position:fixed;inset:0;background:rgba(14,28,18,.45);z-index:10;display:none}
+.velo.on{display:block}
+.hojaEd{position:fixed;left:0;right:0;bottom:0;z-index:11;background:var(--campo);
+  border-radius:20px 20px 0 0;max-height:94vh;overflow:auto;transform:translateY(100%);
+  transition:transform .22s ease-out,visibility 0s .22s;visibility:hidden;padding:8px 16px calc(20px + env(safe-area-inset-bottom))}
+.hojaEd.on{transform:none;visibility:visible;transition:transform .22s ease-out}
+@media (prefers-reduced-motion:reduce){.hojaEd{transition:none}}
+.hojaEd .in{max-width:640px;margin:0 auto}
+.asa{width:44px;height:5px;border-radius:9px;background:var(--linea);margin:4px auto 10px}
+.edTit{display:flex;align-items:center;gap:10px}
+.edTit h3{margin:0;font-size:22px;flex:1}
+.cerrar{background:none;border:0;font-size:28px;line-height:1;color:var(--tinta2);min-width:48px;min-height:48px}
+
+.dictado{position:relative;margin-top:10px}
+.dictado textarea{min-height:120px;padding-right:76px;font-size:18px}
+.mic{position:absolute;right:8px;bottom:8px;width:60px;height:60px;border-radius:50%;
+  border:0;background:var(--verde);color:#fff;display:grid;place-items:center}
+.mic svg{width:28px;height:28px}
+.mic.oye{background:#B3261E;animation:latido 1.1s infinite}
+@keyframes latido{50%{box-shadow:0 0 0 10px rgba(179,38,30,.18)}}
+@media (prefers-reduced-motion:reduce){.mic.oye{animation:none}}
+.ayuda{font-size:14px;color:var(--tinta2);margin:6px 2px 0}
+
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.campos .full{grid-column:1/-1}
+.estados{display:flex;flex-wrap:wrap;gap:6px}
+.estados button{min-height:42px;border-radius:99px;border:1.5px solid var(--linea);background:var(--hoja);padding:0 13px;font-size:15px}
+.estados button[aria-pressed=true]{background:var(--verde);border-color:var(--verde);color:#fff}
+
+.aviso{background:var(--alertaBg);color:#5A3800;border-radius:10px;padding:9px 12px;font-size:14px;margin-top:10px}
+.aviso:empty{display:none}
+
+/* registros */
+.reg{background:var(--hoja);border:1.5px solid var(--linea);border-radius:var(--r);padding:12px 14px;margin-bottom:10px}
+.reg.cargado{opacity:.6}
+.reg .top{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.reg .top b{font-size:18px}
+.reg .top span{color:var(--tinta2);font-size:14px}
+.reg .meta{margin-top:4px;font-size:15px}
+.reg .meta em{font-style:normal;background:var(--campo);border-radius:6px;padding:1px 7px;margin-right:4px}
+.reg .meta em.falta{background:var(--alertaBg);color:var(--alerta)}
+.reg p{margin:6px 0 0;font-size:15px}
+.reg .acc{display:flex;gap:8px;margin-top:8px}
+.reg .acc button{min-height:40px;border-radius:10px;border:1.5px solid var(--linea);background:var(--hoja);padding:0 12px;font-size:14px}
+.grupo{font-size:14px;color:var(--tinta2);margin:18px 0 8px;font-weight:600}
+.vacio{text-align:center;color:var(--tinta2);padding:28px 10px}
+
+pre.exp{white-space:pre-wrap;background:var(--hoja);border:1.5px solid var(--linea);border-radius:var(--r);padding:12px;font-size:13px;max-height:40vh;overflow:auto}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:var(--tinta);color:#fff;padding:10px 16px;border-radius:10px;z-index:20;font-size:15px;display:none;max-width:90vw}
+.toast.on{display:block}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header><div class="fila"><h1>Recorrida SOS</h1><span id="red" class="red">Con señal</span></div></header>
+
+<main class="wrap">
+  <!-- PESTAÑA RECORRIDA -->
+  <section id="tab-recorrida">
+    <div class="ctx">
+      <label class="c full">Fecha<input type="date" id="fecha"></label>
+      <label class="c">Empresa<select id="empresa"></select></label>
+      <label class="c">Campo<select id="campo"></select></label>
+    </div>
+    <h2 id="tituloLotes">Lotes</h2>
+    <div class="lotes" id="lotes"></div>
+    <div class="fila-btn">
+      <button class="btn" id="btnCorrido">Dictar varios lotes de corrido</button>
+    </div>
+  </section>
+
+  <!-- PESTAÑA REGISTROS -->
+  <section id="tab-registros" hidden>
+    <div id="listaReg"></div>
+  </section>
+
+  <!-- PESTAÑA ENVIAR -->
+  <section id="tab-enviar" hidden>
+    <h2>Registros pendientes de cargar en AppSheet</h2>
+    <p class="ayuda" id="resumenEnviar"></p>
+    <div class="fila-btn">
+      <button class="btn pri" id="btnCopiar">Copiar recorrida</button>
+      <button class="btn" id="btnCompartir">Compartir</button>
+    </div>
+    <div class="fila-btn">
+      <button class="btn" id="btnCSV">Descargar CSV</button>
+      <button class="btn" id="btnMarcar">Marcar como cargados</button>
+    </div>
+    <h2>Vista previa</h2>
+    <pre class="exp" id="preview"></pre>
+  </section>
+</main>
+
+<nav><div class="in">
+  <button data-tab="recorrida" aria-current="page">Recorrida</button>
+  <button data-tab="registros">Registros <span class="badge" id="bdgReg" hidden></span></button>
+  <button data-tab="enviar">Enviar <span class="badge" id="bdgEnv" hidden></span></button>
+</div></nav>
+
+<!-- EDITOR DE LOTE -->
+<div class="velo" id="velo"></div>
+<div class="hojaEd" id="editor" role="dialog" aria-modal="true" aria-labelledby="edLote">
+  <div class="in">
+    <div class="asa"></div>
+    <div class="edTit"><h3 id="edLote">Lote</h3><button class="cerrar" id="edCerrar" aria-label="Cerrar">×</button></div>
+    <div class="campos" style="margin-top:4px">
+      <label class="c full" id="wrapLoteSel" hidden>Lote<select id="edLoteSel"></select></label>
+    </div>
+    <div class="dictado">
+      <textarea id="edDictado" placeholder="Ej: soja de segunda, V2, bueno. Rama negra en cabeceras, aplicar 2,5 de glifo más 500 de 2,4D"></textarea>
+      <button class="mic" id="edMic" aria-label="Dictar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
+    </div>
+    <p class="ayuda" id="edAyuda">Decí cultivo, estado fenológico y estado al principio; el resto queda como comentario.</p>
+    <div class="campos">
+      <label class="c">Cultivo<select id="edCultivo"></select></label>
+      <label class="c">Estado fenológico<input type="text" id="edEF" list="dlEF" autocomplete="off" placeholder="V4, R3, Z 3.2…"></label>
+      <div class="c full"><span>Estado</span><div class="estados" id="edEstado"></div></div>
+      <label class="c full">Comentarios<textarea id="edComent" rows="4"></textarea></label>
+    </div>
+    <datalist id="dlEF"></datalist>
+    <div class="aviso" id="edAviso"></div>
+    <div class="fila-btn">
+      <button class="btn pri" id="edGuardar">Guardar</button>
+      <button class="btn" id="edGuardarSig">Guardar y seguir</button>
+    </div>
+    <div class="fila-btn"><button class="btn peligro" id="edBorrar" hidden>Borrar registro</button></div>
+  </div>
+</div>
+
+<!-- DICTADO DE CORRIDO -->
+<div class="hojaEd" id="corrido" role="dialog" aria-modal="true" aria-labelledby="cTit">
+  <div class="in">
+    <div class="asa"></div>
+    <div class="edTit"><h3 id="cTit">Varios lotes</h3><button class="cerrar" id="cCerrar" aria-label="Cerrar">×</button></div>
+    <p class="ayuda">Empezá cada lote diciendo “lote” y su número. Ej: “Lote 5, soja de segunda, V2, bueno, rama negra en cabecera. Lote 10 y 11, soja de segunda, V1, muy bueno, limpio.”</p>
+    <div class="dictado">
+      <textarea id="cTexto" style="min-height:200px"></textarea>
+      <button class="mic" id="cMic" aria-label="Dictar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg></button>
+    </div>
+    <div class="aviso" id="cAviso"></div>
+    <div class="fila-btn"><button class="btn pri bloque" id="cSeparar">Separar por lote y guardar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ======== DATOS (extraídos de SOS Agro App, vista Monitoreo, 05/11/2026) ======== */
+const DATOS = {
+  "C4": {
+    "Don_Manuel": ["DM_1y3","DM_2y4","DM_5","DM_1-2-3-4"],
+    "Fossati": ["Fossa_1","Fossa_2"],
+    "Los_Chañares": ["LCh_01","LCh_02","LCh_13","LCh_14","LCh_15","LCh_16","LCh_17a","LCh_17b","LCh_18","LCh_20"],
+    "San_Javier": ["SJa_1","SJa_2","SJa_3","SJa_4a","SJa_4b","SJa_5","SJa_4y5"],
+    "San_José_RGB": ["SJo_6","SJo_7","SJo_8","Sjo_8b","SJo_17","SJo_18a","SJo_18b"],
+    "Santa_Margarita": ["SMta_1y2","SMta_1_bajo","SMta_2-3_bajo","SMta_03","SMta_04_n","SMta_04_s","SMta_05","SMta_06","SMta_06s","SMta_07","SMta_08","SMta_09","SMta_10y11","SMta_12","SMta_13","SMta_14","SMta_15","SMta_16","SMta_17","SMta_18","SMta_19n","SMta_20","SMta_21","SMta_22","SMta_23n","SMta_23s","SMta_24","SMta_25"],
+    "Fino": ["Fino_1","Fino_2","Fino_3-4-5-6"],
+    "Zemma": ["Zemma_1","Zemma_2"]
+  },
+  "ECSRL": {
+    "La_Magdalena": ["LMgd_1","LMgd_2","LMgd_3","LMgd_4","LMgd_4a","LMgd_4b","LMgd_4c","LMgd_5","LMgd_6","LMgd_7","LMgd_8"],
+    "San_Pedro": ["SPe_1","SPe_2","SPe_3","SPe_4","SPe_5a","SPe_5b","SPe_5c","SPe_6"]
+  },
+  "RyJLC": {
+    "San_Julio": ["SJul_1","SJul_2a","SJul_2b","SJul_2c","SJul_2d","SJul_2ayc","SJul_2byguachera","SJul_2b-d-guachera","SJul_3","SJul_3a","SJul_3b","SJul_4a","SJul_4b","SJul_7","SJul_7a","SJul_7b","SJul_8","SJul_9","SJul_9a","SJul_9b","SJul_9c","SJul_9d","SJul_10","SJul_Encierre","SJul_Guachera"],
+    "13_de_Junio": ["13_Jun_1","13_Jun_2y3","13_Jun_4","13_Jun_5","13_Jun_6","13_Jun_7","13_Jun_9","13_Jun_10","13_Jun_11","13_Jun_12","13_Jun_13","13_Jun_10-11-12s","13_Jun_12ny13"],
+    "Don_Lui": ["DLu_1y2","DLu_3y4","DLu_1-2-3-4"],
+    "La_María_Susana": ["LMS_1-3-5","LMS_2-4-6","LMS_7y8","LMS_1-2-3-4-5-6-7-8"],
+    "San_Ricardo": ["SRi_6-7-13","SRi_11y12","SRi_18","SRi_19","SRi_18y19","SRi_20y21","SRi_20y21a","SRi_26y27","SRi_28y29","SRi_34","SRi_36-37-38"]
+  }
+};
+const CULTIVOS = ["Soja","Soja 2da","Maiz","Maiz tardio","Maiz 2da","Trigo","Cebada","Girasol","Centeno","Avena","Triticale","Sorgo","Mani","Poroto","Arveja","Alfalfa","Camelina","Colza","Moha","Pastura","Vicia","Vicia + Graminea","Cultivo Cobertura","Sin definir"];
+const ESTADOS = ["Malo","Regular","Bueno","Muy Bueno","Excelente","Sin aplicar"];
+const FINA = ["Trigo","Cebada","Centeno","Avena","Triticale"];
+const EF_GRUESA = ["Barbecho","Sembrado","Ve","Vc",...Array.from({length:13},(_,i)=>"V"+(i+1)),"R1","R2","R3","R4","R5","R5.1","R5.2","R5.3","R5.4","R5.5","R6","R7","R8"];
+const EF_FINA = ["Barbecho","Sembrado",...[1,2,3,4,5,6,7,8,9].flatMap(a=>[0,1,2,3,4,5,6,7,8,9].map(b=>`Z ${a}.${b}`))];
+
+/* ======== ESTADO ======== */
+const KEY="recorridaSOS.v1";
+let S = cargar();
+function cargar(){
+  try{ const s=JSON.parse(localStorage.getItem(KEY)); if(s&&s.registros) return s; }catch(e){}
+  return {ctx:{empresa:"C4",campo:"Santa_Margarita"}, registros:[], ultimoCultivo:{}};
+}
+function guardar(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast("No se pudo guardar en el teléfono"); } }
+if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+
+const $=id=>document.getElementById(id);
+const hoy=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10);};
+const fechaAR=iso=>{const [y,m,d]=iso.split("-");return `${+d}/${+m}/${y}`;};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),2600);}
+
+/* ======== INTÉRPRETE DEL DICTADO ======== */
+const sinTilde=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"");
+const NUM={uno:"1",una:"1",un:"1",dos:"2",tres:"3",cuatro:"4",cinco:"5",seis:"6",siete:"7",ocho:"8",nueve:"9",diez:"10",once:"11",doce:"12",trece:"13",catorce:"14",quince:"15",dieciseis:"16",diecisiete:"17",dieciocho:"18",diecinueve:"19",veinte:"20",veintiuno:"21",veintidos:"22",veintitres:"23",veinticuatro:"24",veinticinco:"25",cero:"0"};
+function normTok(t){
+  let x=sinTilde(t.toLowerCase()).replace(/^[¿¡"'(]+|[,;:!?"')]+$/g,"").replace(/\.$/,"");
+  return NUM[x]||x;
+}
+const PAT_CULT=[
+  [/^soja (de )?(segunda|2da|2a|2)$/,"Soja 2da"],[/^soja2da$/,"Soja 2da"],
+  [/^maiz (de )?(segunda|2da|2a|2)$/,"Maiz 2da"],
+  [/^maiz tardio$/,"Maiz tardio"],[/^maiz (temprano|de primera)$/,"Maiz"],[/^maiz$/,"Maiz"],
+  [/^soja (de )?primera$/,"Soja"],[/^soja$/,"Soja"],
+  [/^trigo$/,"Trigo"],[/^cebada$/,"Cebada"],[/^girasol$/,"Girasol"],[/^centeno$/,"Centeno"],[/^avena$/,"Avena"],
+  [/^triticale$/,"Triticale"],[/^sorgo$/,"Sorgo"],[/^mani$/,"Mani"],[/^poroto$/,"Poroto"],[/^arveja$/,"Arveja"],
+  [/^alfalfa$/,"Alfalfa"],[/^camelina$/,"Camelina"],[/^colza$/,"Colza"],[/^moha$/,"Moha"],[/^pastura$/,"Pastura"],
+  [/^vicia (y|mas|\+) graminea$/,"Vicia + Graminea"],[/^vicia$/,"Vicia"],
+  [/^(cultivo de cobertura|cobertura)$/,"Cultivo Cobertura"],[/^sin definir$/,"Sin definir"]
+];
+function matchEF(w){
+  w=w.replace(/ (punto|coma) /g,".").replace(/,/g,".");
+  let m;
+  if(/^barbecho$/.test(w)) return "Barbecho";
+  if(/^(sembrado|sembrada|recien sembrado)$/.test(w)) return "Sembrado";
+  if(/^(vc|v c|ve ce|cotiledon|cotiledonar)$/.test(w)) return "Vc";
+  if(/^(ve|v e|uve e)$/.test(w)) return "Ve";
+  if(m=w.match(/^(?:v|ve|uve) ?(\d{1,2})$/)){const n=+m[1]; if(n>=1&&n<=13) return "V"+n;}
+  if(m=w.match(/^(?:r|erre) ?(\d)(?:[. ](\d))?$/)){const a=+m[1]; if(a>=1&&a<=8) return "R"+a+(m[2]&&a===5?"."+m[2]:"");}
+  if(m=w.match(/^(?:z|zeta|zadoks) ?(\d)(?:[. ]?(\d))?$/)) return `Z ${m[1]}.${m[2]||"0"}`;
+  if(m=w.match(/^z(\d)\.(\d)$/)) return `Z ${m[1]}.${m[2]}`;
+  return null;
+}
+function matchEstado(w){
+  const t={"muy bueno":"Muy Bueno","muy buena":"Muy Bueno","bueno":"Bueno","buena":"Bueno","regular":"Regular","malo":"Malo","mala":"Malo","excelente":"Excelente","sin aplicar":"Sin aplicar"};
+  return t[w]||null;
+}
+const RELLENO=new Set(["en","esta","estado","el","la","de","con","y","es","cultivo","fenologico","lote"]);
+/* devuelve {cultivo,ef,estado,comentario} */
+function interpretar(texto){
+  const orig=texto.trim().split(/\s+/).filter(Boolean);
+  const N=orig.map(normTok);
+  const r={cultivo:null,ef:null,estado:null}; let i=0;
+  while(i<N.length){
+    let ok=false;
+    for(let L=4;L>=1&&!ok;L--){
+      if(i+L>N.length) continue;
+      const w=N.slice(i,i+L).join(" ");
+      if(!r.cultivo){for(const [re,v] of PAT_CULT){ if(re.test(w)){r.cultivo=v;i+=L;ok=true;break;} }}
+      if(!ok&&!r.ef){const e=matchEF(w); if(e){r.ef=e;i+=L;ok=true;}}
+      if(!ok&&!r.estado){const e=matchEstado(w); if(e){r.estado=e;i+=L;ok=true;}}
+    }
+    if(ok) continue;
+    /* saltar palabras de relleno solo si después sigue algo reconocible */
+    if(RELLENO.has(N[i])){
+      let j=i; while(j<N.length&&RELLENO.has(N[j])) j++;
+      if(j<N.length && j>i){
+        const tmp=interpretarDesde(N,j,r);
+        if(tmp){ i=j; continue; }
+      }
+    }
+    break;
+  }
+  let com=orig.slice(i).join(" ").replace(/^[\s,.;:-]+/,"");
+  if(com) com=com[0].toUpperCase()+com.slice(1);
+  r.comentario=com;
+  return r;
+}
+function interpretarDesde(N,j,r){
+  for(let L=4;L>=1;L--){ if(j+L>N.length) continue; const w=N.slice(j,j+L).join(" ");
+    if(!r.cultivo&&PAT_CULT.some(([re])=>re.test(w))) return true;
+    if(!r.ef&&matchEF(w)) return true;
+    if(!r.estado&&matchEstado(w)) return true; }
+  return false;
+}
+/* ---- lotes dichos de palabra ---- */
+function claveLote(nombre){
+  let k=nombre.replace(/^13_Jun_/i,"").replace(/^[A-Za-zÑñ]+_/,"");
+  return normClave(k);
+}
+/* clave canónica: "10y11" = "10 y 11" → "10-11"; "04_n" = "4 norte" → "4n"; "12" ≠ "1y2" */
+function normClave(s){
+  s=sinTilde(s.toLowerCase()).replace(/\bnorte\b/g,"n").replace(/\bsur\b/g,"s");
+  let prev; do{prev=s; s=s.replace(/([a-z0-9])y([a-z0-9])/g,"$1 $2");}while(s!==prev);
+  const partes=s.split(/[\s_\-.,]+/).filter(t=>t&&t!=="y").map(t=>NUM[t]||t);
+  const toks=partes.flatMap(t=>t.match(/\d+|[a-z]+/g)||[]).map(t=>/^\d+$/.test(t)?String(+t):t);
+  let out=""; toks.forEach((t,i)=>{ if(i&&/^\d/.test(t)&&/^\d/.test(toks[i-1])) out+="-"; out+=t; });
+  return out;
+}
+function buscarLote(tokens, lotes){
+  for(let L=Math.min(8,tokens.length);L>=1;L--){
+    const k=normClave(tokens.slice(0,L).join(" "));
+    const hits=lotes.filter(l=>claveLote(l)===k);
+    if(hits.length) return {lotes:hits,usados:L};
+  }
+  return null;
+}
+
+/* ======== UI: contexto ======== */
+function llenarSelect(sel, opciones, valor){
+  sel.innerHTML=opciones.map(o=>`<option value="${o}">${o.replace(/_/g," ")}</option>`).join("");
+  if(valor && opciones.includes(valor)) sel.value=valor;
+}
+function initCtx(){
+  $("fecha").value=S.ctx.fecha&&S.ctx.fechaGuardada===hoy()?S.ctx.fecha:hoy();
+  llenarSelect($("empresa"),Object.keys(DATOS),S.ctx.empresa);
+  llenarSelect($("campo"),Object.keys(DATOS[$("empresa").value]),S.ctx.campo);
+  dibujarLotes();
+}
+$("fecha").onchange=()=>{S.ctx.fecha=$("fecha").value;S.ctx.fechaGuardada=hoy();guardar();dibujarLotes();};
+$("empresa").onchange=()=>{S.ctx.empresa=$("empresa").value;llenarSelect($("campo"),Object.keys(DATOS[S.ctx.empresa]));S.ctx.campo=$("campo").value;guardar();dibujarLotes();};
+$("campo").onchange=()=>{S.ctx.campo=$("campo").value;guardar();dibujarLotes();};
+
+const lotesActuales=()=>DATOS[$("empresa").value][$("campo").value]||[];
+function regDe(lote){return S.registros.find(r=>r.fecha===$("fecha").value&&r.empresa===$("empresa").value&&r.campo===$("campo").value&&r.lote===lote);}
+function dibujarLotes(){
+  const ls=lotesActuales(); const hechos=ls.filter(l=>regDe(l)).length;
+  $("tituloLotes").textContent=`Lotes de ${$("campo").value.replace(/_/g," ")} · ${hechos} de ${ls.length} recorridos`;
+  $("lotes").innerHTML=ls.map(l=>{const r=regDe(l);
+    return `<button class="lote${r?" hecho":""}" data-lote="${l}"><b>${l}</b>${r?`<small>${[r.cultivo,r.ef,r.estado].filter(Boolean).join(" · ")}</small>`:(S.ultimoCultivo[l]?`<small>${S.ultimoCultivo[l]}</small>`:"")}</button>`;}).join("");
+  actualizarBadges();
+}
+$("lotes").onclick=e=>{const b=e.target.closest(".lote"); if(b) abrirEditor({lote:b.dataset.lote});};
+
+/* ======== EDITOR ======== */
+let edActual=null;
+llenarSelect($("edCultivo"),["",...CULTIVOS]); $("edCultivo").options[0].textContent="—";
+$("edEstado").innerHTML=ESTADOS.map(e=>`<button type="button" aria-pressed="false" data-v="${e}">${e}</button>`).join("");
+$("edEstado").onclick=e=>{const b=e.target.closest("button"); if(!b) return; const on=b.getAttribute("aria-pressed")!=="true";
+  [...$("edEstado").children].forEach(x=>x.setAttribute("aria-pressed","false")); b.setAttribute("aria-pressed",on);};
+const estadoSel=()=>{const b=[...$("edEstado").children].find(x=>x.getAttribute("aria-pressed")==="true");return b?b.dataset.v:"";};
+const setEstado=v=>[...$("edEstado").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===v));
+function listaEF(){const c=$("edCultivo").value; $("dlEF").innerHTML=(FINA.includes(c)?EF_FINA:EF_GRUESA).map(v=>`<option value="${v}">`).join("");}
+$("edCultivo").onchange=listaEF;
+
+function abrirEditor({lote, reg}){
+  const r=reg||regDe(lote);
+  edActual={id:r?r.id:null, lote:r?r.lote:lote};
+  $("edLote").textContent=edActual.lote||"Elegí el lote";
+  $("wrapLoteSel").hidden=!!edActual.lote;
+  if(!edActual.lote) llenarSelect($("edLoteSel"),lotesActuales());
+  $("edDictado").value=r?r.dictado||"":"";
+  $("edCultivo").value=r?r.cultivo||"":(S.ultimoCultivo[lote]||"");
+  $("edEF").value=r?r.ef||"":""; setEstado(r?r.estado:"");
+  $("edComent").value=r?r.comentario||"":"";
+  $("edBorrar").hidden=!r; $("edAviso").textContent="";
+  listaEF(); abrirHoja("editor");
+  if(!r) setTimeout(()=>$("edDictado").focus(),250);
+}
+let timerInt;
+$("edDictado").addEventListener("input",()=>{clearTimeout(timerInt);timerInt=setTimeout(aplicarDictado,350);});
+function aplicarDictado(){
+  const t=$("edDictado").value; const p=interpretar(t);
+  if(p.cultivo) $("edCultivo").value=p.cultivo;
+  if(p.ef) $("edEF").value=p.ef;
+  if(p.estado) setEstado(p.estado);
+  $("edComent").value=p.comentario;
+  listaEF(); validar();
+}
+function validar(){
+  const f=[]; if(!$("edEF").value.trim()) f.push("estado fenológico (obligatorio en AppSheet)");
+  if(!$("edCultivo").value) f.push("cultivo");
+  $("edAviso").textContent=f.length?"Falta: "+f.join(" y ")+".":"";
+}
+["edEF","edCultivo"].forEach(id=>$(id).addEventListener("change",validar));
+function guardarEditor(){
+  const lote=edActual.lote||$("edLoteSel").value;
+  if(!lote){toast("Elegí el lote");return false;}
+  const datos={fecha:$("fecha").value,empresa:$("empresa").value,campo:$("campo").value,lote,
+    cultivo:$("edCultivo").value,ef:$("edEF").value.trim(),estado:estadoSel(),comentario:$("edComent").value.trim(),
+    dictado:$("edDictado").value.trim(),carga:"pendiente",modificado:Date.now()};
+  if(!datos.ef&&!datos.comentario&&!datos.cultivo){toast("No hay nada para guardar");return false;}
+  if(edActual.id){const i=S.registros.findIndex(r=>r.id===edActual.id); S.registros[i]={...S.registros[i],...datos};}
+  else{const prev=regDe(lote); if(prev) Object.assign(prev,datos); else S.registros.push({id:uid(),...datos});}
+  if(datos.cultivo) S.ultimoCultivo[lote]=datos.cultivo;
+  guardar(); dibujarLotes(); dibujarRegistros(); toast(`Guardado ${lote}`); return true;
+}
+$("edGuardar").onclick=()=>{if(guardarEditor()) cerrarHojas();};
+$("edGuardarSig").onclick=()=>{
+  const actual=edActual.lote; if(!guardarEditor()) return;
+  const ls=lotesActuales(); const sig=ls.slice(ls.indexOf(actual)+1).find(l=>!regDe(l))||ls.find(l=>!regDe(l));
+  if(sig) abrirEditor({lote:sig}); else {cerrarHojas(); toast("Recorriste todos los lotes del campo");}
+};
+$("edBorrar").onclick=()=>{ if(!confirm("¿Borrar este registro?")) return;
+  S.registros=S.registros.filter(r=>r.id!==edActual.id); guardar(); cerrarHojas(); dibujarLotes(); dibujarRegistros(); toast("Registro borrado"); };
+$("edCerrar").onclick=cerrarHojas; $("velo").onclick=cerrarHojas;
+
+function abrirHoja(id){$("velo").classList.add("on");$(id).classList.add("on");}
+function cerrarHojas(){detenerMic();["editor","corrido"].forEach(i=>$(i).classList.remove("on"));$("velo").classList.remove("on");}
+
+/* ======== DICTADO DE CORRIDO ======== */
+$("btnCorrido").onclick=()=>{$("cAviso").textContent="";abrirHoja("corrido");setTimeout(()=>$("cTexto").focus(),250);};
+$("cCerrar").onclick=cerrarHojas;
+$("cSeparar").onclick=()=>{
+  const ls=lotesActuales(); const toks=$("cTexto").value.trim().split(/\s+/).filter(Boolean);
+  const partes=[]; let act=null;
+  for(let i=0;i<toks.length;i++){
+    if(normTok(toks[i])==="lote"){
+      const b=buscarLote(toks.slice(i+1),ls);
+      if(b){ act={lotes:b.lotes,toks:[]}; partes.push(act); i+=b.usados; continue; }
+    }
+    if(act) act.toks.push(toks[i]);
+  }
+  if(!partes.length){$("cAviso").textContent="No encontré ningún lote. Empezá cada uno con “lote” y su número, por ejemplo “lote 5”.";return;}
+  const avisos=[]; let n=0;
+  partes.forEach(p=>{
+    const lote=p.lotes[0]; if(p.lotes.length>1) avisos.push(`“${p.lotes.join(" / ")}” coinciden; usé ${lote}`);
+    const d=interpretar(p.toks.join(" "));
+    const datos={fecha:$("fecha").value,empresa:$("empresa").value,campo:$("campo").value,lote,
+      cultivo:d.cultivo||S.ultimoCultivo[lote]||"",ef:d.ef||"",estado:d.estado||"",comentario:d.comentario,dictado:p.toks.join(" "),carga:"pendiente",modificado:Date.now()};
+    const prev=regDe(lote); if(prev) Object.assign(prev,datos); else S.registros.push({id:uid(),...datos});
+    if(datos.cultivo) S.ultimoCultivo[lote]=datos.cultivo; if(!datos.ef) avisos.push(`${lote}: falta estado fenológico`); n++;
+  });
+  guardar(); dibujarLotes(); dibujarRegistros();
+  if(avisos.length){$("cAviso").textContent=`Guardé ${n} lotes. Revisá: `+avisos.join("; ")+".";}
+  else{cerrarHojas(); toast(`Guardé ${n} lotes`);} $("cTexto").value="";
+};
+
+/* ======== MICRÓFONO ======== */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let rec=null, micBtn=null;
+function detenerMic(){ if(rec){try{rec.stop();}catch(e){} } if(micBtn) micBtn.classList.remove("oye"); rec=null; micBtn=null; }
+function usarMic(btn, ta, alTerminar){
+  if(rec){detenerMic();return;}
+  if(!SR || !navigator.onLine){
+    ta.focus();
+    toast(navigator.onLine?"Usá el micrófono del teclado":"Sin señal: usá el micrófono del teclado");
+    return;
+  }
+  rec=new SR(); rec.lang="es-AR"; rec.interimResults=false; rec.continuous=true; micBtn=btn; btn.classList.add("oye");
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++) if(e.results[i].isFinal){
+      ta.value=(ta.value.trim()+" "+e.results[i][0].transcript.trim()).trim(); alTerminar&&alTerminar();}};
+  rec.onerror=()=>{detenerMic(); ta.focus(); toast("El dictado falló: usá el micrófono del teclado");};
+  rec.onend=()=>detenerMic();
+  try{rec.start();}catch(e){detenerMic();}
+}
+$("edMic").onclick=()=>usarMic($("edMic"),$("edDictado"),aplicarDictado);
+$("cMic").onclick=()=>usarMic($("cMic"),$("cTexto"));
+
+/* ======== REGISTROS ======== */
+function dibujarRegistros(){
+  const regs=[...S.registros].sort((a,b)=>b.fecha.localeCompare(a.fecha)||a.campo.localeCompare(b.campo)||a.lote.localeCompare(b.lote,undefined,{numeric:true}));
+  if(!regs.length){$("listaReg").innerHTML=`<p class="vacio">Todavía no hay registros. Tocá un lote en Recorrida para empezar.</p>`;actualizarBadges();return;}
+  let html="",g="";
+  regs.forEach(r=>{const gg=`${fechaAR(r.fecha)} · ${r.empresa} · ${r.campo.replace(/_/g," ")}`;
+    if(gg!==g){g=gg;html+=`<div class="grupo">${gg}</div>`;}
+    html+=`<div class="reg${r.carga==="cargado"?" cargado":""}">
+      <div class="top"><b>${r.lote}</b><span>${r.carga==="cargado"?"Cargado en AppSheet":"Pendiente"}</span></div>
+      <div class="meta"><em class="${r.cultivo?"":"falta"}">${r.cultivo||"sin cultivo"}</em><em class="${r.ef?"":"falta"}">${r.ef||"sin EF"}</em>${r.estado?`<em>${r.estado}</em>`:""}</div>
+      ${r.comentario?`<p>${esc(r.comentario)}</p>`:""}
+      <div class="acc"><button data-ed="${r.id}">Editar</button>${r.carga==="cargado"?`<button data-pend="${r.id}">Volver a pendiente</button>`:""}</div></div>`;});
+  $("listaReg").innerHTML=html; actualizarBadges();
+}
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+$("listaReg").onclick=e=>{
+  const ed=e.target.dataset.ed, pe=e.target.dataset.pend;
+  if(ed){const r=S.registros.find(x=>x.id===ed);
+    $("fecha").value=r.fecha; $("empresa").value=r.empresa; llenarSelect($("campo"),Object.keys(DATOS[r.empresa]),r.campo);
+    abrirEditor({reg:r});}
+  if(pe){S.registros.find(x=>x.id===pe).carga="pendiente";guardar();dibujarRegistros();}
+};
+
+/* ======== ENVIAR ======== */
+const pendientes=()=>S.registros.filter(r=>r.carga!=="cargado").sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.campo.localeCompare(b.campo)||a.lote.localeCompare(b.lote,undefined,{numeric:true}));
+function textoExport(){
+  const p=pendientes(); if(!p.length) return "";
+  const l=[`RECORRIDA SOS – cargar en AppSheet (Monitoreo) – ${p.length} registro${p.length>1?"s":""}`];
+  p.forEach((r,i)=>{l.push("---");
+    l.push(`${i+1}) Fecha: ${fechaAR(r.fecha)} | Empresa: ${r.empresa} | Campo: ${r.campo} | Lote: ${r.lote} | Cultivo: ${r.cultivo||"-"} | EF: ${r.ef||"FALTA"} | Estado: ${r.estado||"-"}`);
+    l.push(`Comentarios: ${(r.comentario||"").replace(/\|/g,"/")}`);});
+  return l.join("\n");
+}
+function dibujarEnviar(){
+  const p=pendientes(); const t=textoExport();
+  const faltan=p.filter(r=>!r.ef).length;
+  $("resumenEnviar").textContent=p.length?`${p.length} pendiente${p.length>1?"s":""}.`+(faltan?` ${faltan} sin estado fenológico: completalos antes de enviar.`:" Copiá la recorrida y pegala en el chat con Claude para cargarla."):"No hay registros pendientes.";
+  $("preview").textContent=t||"—";
+  ["btnCopiar","btnCompartir","btnCSV","btnMarcar"].forEach(id=>$(id).disabled=!p.length);
+}
+$("btnCopiar").onclick=async()=>{const t=textoExport();
+  try{await navigator.clipboard.writeText(t);toast("Recorrida copiada");}
+  catch(e){const ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();toast("Recorrida copiada");}};
+$("btnCompartir").onclick=async()=>{const t=textoExport();
+  if(navigator.share){try{await navigator.share({title:"Recorrida SOS",text:t});}catch(e){}} else $("btnCopiar").click();};
+$("btnCSV").onclick=()=>{
+  const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const filas=[["Fecha","Empresa","Campo","Lote","Cultivo","EF","Estado","Comentarios"],...pendientes().map(r=>[fechaAR(r.fecha),r.empresa,r.campo,r.lote,r.cultivo,r.ef,r.estado,r.comentario])];
+  const blob=new Blob(["﻿"+filas.map(f=>f.map(q).join(";")).join("\r\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`recorrida_${hoy()}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);};
+$("btnMarcar").onclick=()=>{const p=pendientes(); if(!confirm(`¿Marcar ${p.length} registros como cargados en AppSheet?`)) return;
+  p.forEach(r=>r.carga="cargado"); guardar(); dibujarRegistros(); dibujarEnviar(); toast("Marcados como cargados");};
+
+/* ======== PESTAÑAS, BADGES, RED ======== */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.removeAttribute("aria-current")); b.setAttribute("aria-current","page");
+  ["recorrida","registros","enviar"].forEach(t=>$("tab-"+t).hidden=t!==b.dataset.tab);
+  if(b.dataset.tab==="registros") dibujarRegistros(); if(b.dataset.tab==="enviar") dibujarEnviar(); scrollTo(0,0);});
+function actualizarBadges(){const n=pendientes().length;
+  [$("bdgReg"),$("bdgEnv")].forEach(e=>{e.textContent=n;e.hidden=!n;});}
+function red(){const on=navigator.onLine;$("red").textContent=on?"Con señal":"Sin señal";$("red").classList.toggle("sin",!on);}
+addEventListener("online",red);addEventListener("offline",red);red();
+
+initCtx(); dibujarRegistros();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
