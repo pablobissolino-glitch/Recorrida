@@ -344,16 +344,39 @@ function estadoMic(on){
   $("micTxt").innerHTML=on?"<b>Escuchando…</b>Tocá de nuevo cuando termines la recorrida.":"<b>Tocá para dictar</b>Decí “lote” y el número antes de cada lote. Hacé las pausas que quieras.";
   if(!on) $("vivo").textContent="";
 }
-function agregarTexto(t){t=t.trim(); if(!t) return; const ta=$("texto"); ta.value=(ta.value.replace(/\s+$/,"")+(ta.value.trim()?" ":"")+t); guardarBorrador(); ta.scrollTop=ta.scrollHeight;}
+/* Android repite y acumula resultados ("lote 5" → "lote 5 soja" → …).
+   Escucho de a una frase por sesión: la versión más larga de la frase reemplaza a las anteriores,
+   y al terminar la sesión se agrega al texto solo si no es una repetición. Después se reinicia solo. */
+const cmp=s=>sinTilde(s.toLowerCase()).replace(/[^a-z0-9]+/g," ").trim();
+let frase="";
+function confirmarFrase(){
+  const t=frase.trim(); frase=""; $("vivo").textContent=""; if(!t) return;
+  const ta=$("texto"), actual=cmp(ta.value), nueva=cmp(t);
+  if(actual.endsWith(nueva)) return;                 /* repetida */
+  const ult=S.ultimaFrase?cmp(S.ultimaFrase):"";
+  if(ult && nueva.startsWith(ult) && actual.endsWith(ult)){ /* versión ampliada de la anterior: reemplazo */
+    ta.value=ta.value.slice(0, ta.value.length-S.ultimaFrase.length).replace(/\s+$/,"");
+  }
+  ta.value=(ta.value.replace(/\s+$/,"")+(ta.value.trim()?" ":"")+t);
+  S.ultimaFrase=t; guardarBorrador(); ta.scrollTop=ta.scrollHeight;
+}
 function arrancar(){
-  rec=new SR(); rec.lang="es-AR"; rec.continuous=true; rec.interimResults=true;
-  rec.onresult=e=>{let vivo="";for(let i=e.resultIndex;i<e.results.length;i++){const r=e.results[i]; if(r.isFinal) agregarTexto(r[0].transcript); else vivo+=r[0].transcript;} $("vivo").textContent=vivo;};
+  frase="";
+  rec=new SR(); rec.lang="es-AR"; rec.continuous=false; rec.interimResults=true; rec.maxAlternatives=1;
+  rec.onresult=e=>{ /* tomo el texto completo de esta sesión, no lo voy sumando */
+    let fin="",parcial="";
+    for(let i=0;i<e.results.length;i++){const r=e.results[i]; if(r.isFinal) fin=masLarga(fin,r[0].transcript); else parcial=r[0].transcript;}
+    if(fin) frase=masLarga(frase,fin);
+    $("vivo").textContent=(frase&&!parcial)?frase:(parcial||frase);
+  };
   rec.onerror=e=>{ if(e.error==="network"||e.error==="service-not-allowed"){ detener(); $("texto").focus(); toast("Sin señal: usá el micrófono del teclado"); }
                    else if(e.error==="not-allowed"){ detener(); toast("Permití el micrófono para esta app"); } };
-  rec.onend=()=>{ if(oyendo){ setTimeout(()=>{ if(oyendo){ try{arrancar();}catch(e){} } },200); } };
+  rec.onend=()=>{ confirmarFrase(); if(oyendo){ setTimeout(()=>{ if(oyendo){ try{arrancar();}catch(e){} } },150); } };
   try{rec.start();}catch(e){}
 }
-function detener(){estadoMic(false); if(rec){rec.onend=null; try{rec.stop();}catch(e){}} rec=null;}
+/* entre dos versiones de la misma frase me quedo con la que contiene a la otra; si son distintas, las uno */
+function masLarga(a,b){ if(!a) return b; const A=cmp(a),B=cmp(b); if(B.includes(A)) return b; if(A.includes(B)) return a; return a.trim()+" "+b.trim(); }
+function detener(){const r=rec; estadoMic(false); rec=null; if(r){r.onend=null; r.onresult=null; try{r.stop();}catch(e){}} confirmarFrase();}
 $("mic").onclick=()=>{
   if(oyendo){detener();return;}
   if(!SR||!navigator.onLine){ $("texto").focus(); toast(navigator.onLine?"Usá el micrófono del teclado":"Sin señal: usá el micrófono del teclado"); return; }
@@ -362,7 +385,7 @@ $("mic").onclick=()=>{
 function guardarBorrador(){S.borrador=$("texto").value; guardar(); estadoBotones();}
 $("texto").addEventListener("input",guardarBorrador);
 function estadoBotones(){const hay=!!$("texto").value.trim(); $("procesar").disabled=!hay; $("borrarTexto").hidden=!hay;}
-$("borrarTexto").onclick=()=>{ if(!confirm("¿Borrar todo el texto dictado sin procesar?")) return; detener(); $("texto").value=""; guardarBorrador(); };
+$("borrarTexto").onclick=()=>{ if(!confirm("¿Borrar todo el texto dictado sin procesar?")) return; detener(); $("texto").value=""; S.ultimaFrase=""; guardarBorrador(); };
 
 /* ======== PROCESAR ======== */
 const SALTEAR=new Set(["numero","nro","n","n°","no","nº"]);
@@ -385,18 +408,37 @@ function procesar(){
     if(!act){act={lote:"",loteOk:false,dicho:"(sin lote)",toks:[]};partes.push(act);}
     act.toks.push(toks[i]);
   }
-  let n=0,rev=0;
+  /* cada parte se interpreta; si un lote aparece varias veces, se junta en un solo registro */
+  const fecha=$("fecha").value, porLote=new Map(), sueltos=[];
   partes.forEach(p=>{
     const txt=p.toks.join(" ").trim(); if(!txt&&!p.lote) return;
     const d=interpretar(txt);
-    const r={id:uid(),fecha:$("fecha").value,empresa,campo,lote:p.lote,loteOk:p.loteOk,loteDicho:p.dicho,
-      cultivo:d.cultivo||(p.lote&&S.ultimoCultivo[p.lote])||"",ef:d.ef||"",estado:d.estado||"",comentario:d.comentario,
-      dictado:(p.loteOk?"Lote "+p.lote+": ":"")+txt,carga:"pendiente",creado:Date.now()};
-    if(r.cultivo&&r.lote) S.ultimoCultivo[r.lote]=r.cultivo;
-    S.registros.push(r); n++; if(faltas(r).length) rev++;
+    const r={fecha,empresa,campo,lote:p.lote,loteOk:p.loteOk,loteDicho:p.dicho,cultivo:d.cultivo||"",ef:d.ef||"",estado:d.estado||"",
+      comentario:d.comentario||"",dictado:(p.loteOk?"Lote "+p.lote+": ":"")+txt};
+    if(p.loteOk&&porLote.has(p.lote)) fusionar(porLote.get(p.lote),r);
+    else if(p.loteOk) porLote.set(p.lote,r); else sueltos.push(r);
   });
-  $("texto").value=""; guardarBorrador(); dibujarHoy(); actualizarBadges();
-  toast(n?`${n} registro${n>1?"s":""} guardado${n>1?"s":""}`+(rev?` · ${rev} para revisar`:""):"No encontré nada para guardar");
+  let nuevos=0,actz=0,rev=0;
+  [...porLote.values(),...sueltos].forEach(r=>{
+    if(!r.cultivo&&r.lote) r.cultivo=S.ultimoCultivo[r.lote]||"";
+    const prev=r.loteOk&&S.registros.find(x=>x.fecha===fecha&&x.campo===campo&&x.lote===r.lote&&x.carga!=="cargado");
+    let fin;
+    if(prev){fusionar(prev,r);fin=prev;actz++;}
+    else{fin={id:uid(),...r,carga:"pendiente",creado:Date.now()};S.registros.push(fin);nuevos++;}
+    if(fin.cultivo&&fin.lote) S.ultimoCultivo[fin.lote]=fin.cultivo;
+    if(faltas(fin).length) rev++;
+  });
+  $("texto").value=""; S.ultimaFrase=""; guardarBorrador(); dibujarHoy(); actualizarBadges();
+  const partesMsg=[]; if(nuevos) partesMsg.push(`${nuevos} nuevo${nuevos>1?"s":""}`); if(actz) partesMsg.push(`${actz} actualizado${actz>1?"s":""}`); if(rev) partesMsg.push(`${rev} para revisar`);
+  toast(partesMsg.length?"Registros: "+partesMsg.join(" · "):"No encontré nada para guardar");
+}
+/* completa a con lo que trae b: campos vacíos se llenan, lo dicho después manda, comentarios se suman sin repetir */
+function fusionar(a,b){
+  ["cultivo","ef","estado"].forEach(k=>{ if(b[k]) a[k]=b[k]; });
+  if(b.comentario){ const A=cmp(a.comentario||""),B=cmp(b.comentario);
+    if(!A) a.comentario=b.comentario; else if(B.includes(A)) a.comentario=b.comentario; else if(!A.includes(B)) a.comentario=a.comentario.replace(/[\s.]*$/,"")+". "+b.comentario; }
+  if(b.dictado&&!cmp(a.dictado||"").includes(cmp(b.dictado))) a.dictado=(a.dictado?a.dictado+" | ":"")+b.dictado;
+  return a;
 }
 $("procesar").onclick=procesar;
 
