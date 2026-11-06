@@ -99,6 +99,8 @@ nav button[aria-current=page]::before{content:"";position:absolute;top:0;left:22
 .estados{display:flex;flex-wrap:wrap;gap:6px}
 .estados button{min-height:42px;border-radius:99px;border:1.5px solid var(--linea);background:var(--hoja);padding:0 13px;font-size:15px}
 .estados button[aria-pressed=true]{background:var(--verde);border-color:var(--verde);color:#fff}
+.reg .trat{margin-top:6px;font-size:14px;background:#E8F0E4;border-radius:8px;padding:4px 8px}
+.reg .trat b{color:var(--verde)}
 .dicho{font-size:14px;color:var(--tinta2);background:var(--hoja);border-radius:10px;padding:8px 10px;margin-top:8px}
 
 pre.exp{white-space:pre-wrap;background:var(--hoja);border:1.5px solid var(--linea);border-radius:14px;padding:12px;font-size:13px;max-height:40vh;overflow:auto}
@@ -170,6 +172,7 @@ pre.exp{white-space:pre-wrap;background:var(--hoja);border:1.5px solid var(--lin
       <label class="c">Estado fenológico<input type="text" id="edEF" list="dlEF" autocomplete="off" placeholder="V4, R3, Z 3.2…"></label>
       <div class="c full"><span>Estado</span><div class="estados" id="edEstado"></div></div>
       <label class="c full">Comentarios<textarea id="edComent" rows="4"></textarea></label>
+      <label class="c full">Tratamiento (para la orden de trabajo)<textarea id="edTrat" rows="2" placeholder="Vacío si no hay que aplicar"></textarea></label>
     </div>
     <datalist id="dlEF"></datalist>
     <div class="dicho" id="edDicho"></div>
@@ -448,7 +451,7 @@ function procesar(){
     const txt=p.toks.join(" ").trim(); if(!txt&&!p.lote) return;
     const d=interpretar(txt);
     const r={fecha,empresa,campo,lote:p.lote,loteOk:p.loteOk,loteDicho:p.dicho,cultivo:d.cultivo||"",ef:d.ef||"",estado:d.estado||"",
-      comentario:d.comentario||"",dictado:(p.loteOk?"Lote "+p.lote+": ":"")+txt};
+      comentario:d.comentario||"",tratamiento:extraerTrat(d.comentario||""),dictado:(p.loteOk?"Lote "+p.lote+": ":"")+txt};
     if(p.loteOk&&porLote.has(p.lote)) fusionar(porLote.get(p.lote),r);
     else if(p.loteOk) porLote.set(p.lote,r); else sueltos.push(r);
   });
@@ -467,10 +470,15 @@ function procesar(){
   toast(partesMsg.length?"Registros: "+partesMsg.join(" · "):"No encontré nada para guardar");
 }
 /* completa a con lo que trae b: campos vacíos se llenan, lo dicho después manda, comentarios se suman sin repetir */
+/* Tratamiento: desde la palabra que lo anuncia ("aplicar", "tratamiento", "hacer con", "mandar con"...) hasta el final.
+   El comentario completo se mantiene igual para AppSheet; esto es una copia aparte para armar la orden. */
+const DISPARA=/\b(mandar a aplicar|enviar a aplicar|aplicar|aplica|aplicaria|tratamiento|tratar|hacer con|hacerlo con|mandar con|pulverizar con|pulverizar)\b/i;
+function extraerTrat(c){ const m=c.match(DISPARA); if(!m) return ""; let t=c.slice(m.index).trim(); t=t[0].toUpperCase()+t.slice(1); return t.replace(/[\s.]+$/,""); }
 function fusionar(a,b){
   ["cultivo","ef","estado"].forEach(k=>{ if(b[k]) a[k]=b[k]; });
   if(b.comentario){ const A=cmp(a.comentario||""),B=cmp(b.comentario);
     if(!A) a.comentario=b.comentario; else if(B.includes(A)) a.comentario=b.comentario; else if(!A.includes(B)) a.comentario=a.comentario.replace(/[\s.]*$/,"")+". "+b.comentario; }
+  if(b.tratamiento){ const A=cmp(a.tratamiento||""),B=cmp(b.tratamiento); if(!A||B.includes(A)) a.tratamiento=b.tratamiento; else if(!A.includes(B)) a.tratamiento=a.tratamiento+". "+b.tratamiento; }
   if(b.dictado&&!cmp(a.dictado||"").includes(cmp(b.dictado))) a.dictado=(a.dictado?a.dictado+" | ":"")+b.dictado;
   return a;
 }
@@ -483,7 +491,7 @@ function tarjeta(r,conFecha){
   return `<button class="reg${f.length?" revisar":""}${r.carga==="cargado"?" cargado":""}" data-id="${r.id}">
     <div class="top"><b>${lote}</b><span>${r.carga==="cargado"?"Cargado":(f.length?"Revisar":"Listo")}</span></div>
     <div class="meta"><em class="${r.cultivo?"":"falta"}">${esc(r.cultivo)||"falta cultivo"}</em><em class="${r.ef?"":"falta"}">${esc(r.ef)||"falta EF"}</em>${r.estado?`<em>${esc(r.estado)}</em>`:""}</div>
-    ${r.comentario?`<p>${esc(r.comentario)}</p>`:""}</button>`;
+    ${r.comentario?`<p>${esc(r.comentario)}</p>`:""}${r.tratamiento?`<div class="trat"><b>Tratamiento:</b> ${esc(r.tratamiento)}</div>`:""}</button>`;
 }
 function ordenar(a){return a.sort((x,y)=>y.fecha.localeCompare(x.fecha)||x.campo.localeCompare(y.campo)||(x.lote||"~").localeCompare(y.lote||"~",undefined,{numeric:true})||x.creado-y.creado);}
 function dibujarHoy(){
@@ -518,7 +526,7 @@ function abrirEditor(id){
   $("edLote").value=r.loteOk?r.lote:"";
   $("edCultivo").value=r.cultivo||""; $("edEF").value=r.ef||"";
   [...$("edEstado").children].forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===r.estado));
-  $("edComent").value=r.comentario||""; $("edDicho").textContent="Dictado original: "+(r.dictado||"—");
+  $("edComent").value=r.comentario||""; $("edTrat").value=r.tratamiento||""; $("edDicho").textContent="Dictado original: "+(r.dictado||"—");
   $("edTit").textContent=`${bonito(r.campo)} · ${fechaAR(r.fecha)}`;
   listaEF(); $("velo").classList.add("on"); $("editor").classList.add("on");
 }
@@ -526,7 +534,7 @@ function cerrarEditor(){$("velo").classList.remove("on");$("editor").classList.r
 $("edCerrar").onclick=cerrarEditor; $("velo").onclick=cerrarEditor;
 $("edGuardar").onclick=()=>{
   const r=S.registros.find(x=>x.id===edId); const l=$("edLote").value;
-  Object.assign(r,{lote:l,loteOk:!!l,cultivo:$("edCultivo").value,ef:$("edEF").value.trim(),estado:estadoSel(),comentario:$("edComent").value.trim(),carga:r.carga==="cargado"?"pendiente":r.carga});
+  Object.assign(r,{lote:l,loteOk:!!l,cultivo:$("edCultivo").value,ef:$("edEF").value.trim(),estado:estadoSel(),comentario:$("edComent").value.trim(),tratamiento:$("edTrat").value.trim(),carga:r.carga==="cargado"?"pendiente":r.carga});
   if(r.cultivo&&r.lote) S.ultimoCultivo[r.lote]=r.cultivo;
   guardar(); cerrarEditor(); refrescar(); toast("Cambios guardados");
 };
@@ -539,7 +547,8 @@ function textoExport(){
   const l=[`RECORRIDA SOS – cargar en AppSheet (Monitoreo) – ${p.length} registro${p.length>1?"s":""}`];
   p.forEach((r,i)=>{l.push("---");
     l.push(`${i+1}) Fecha: ${fechaAR(r.fecha)} | Empresa: ${r.empresa} | Campo: ${r.campo} | Lote: ${r.loteOk?r.lote:"FALTA (dijo: "+(r.loteDicho||"-")+")"} | Cultivo: ${r.cultivo||"FALTA"} | EF: ${r.ef||"FALTA"} | Estado: ${r.estado||"-"}`);
-    l.push(`Comentarios: ${(r.comentario||"").replace(/\|/g,"/")}`);});
+    l.push(`Comentarios: ${(r.comentario||"").replace(/\|/g,"/")}`);
+    if(r.tratamiento) l.push(`Tratamiento: ${r.tratamiento.replace(/\|/g,"/")}`);});
   return l.join("\n");
 }
 function dibujarEnviar(){
@@ -553,7 +562,7 @@ $("btnCopiar").onclick=async()=>{const t=textoExport();
   toast("Recorrida copiada");};
 $("btnCompartir").onclick=async()=>{const t=textoExport(); if(navigator.share){try{await navigator.share({title:"Recorrida SOS",text:t});}catch(e){}} else $("btnCopiar").click();};
 $("btnCSV").onclick=()=>{const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
-  const filas=[["Fecha","Empresa","Campo","Lote","Cultivo","EF","Estado","Comentarios"],...pendientes().map(r=>[fechaAR(r.fecha),r.empresa,r.campo,r.loteOk?r.lote:"",r.cultivo,r.ef,r.estado,r.comentario])];
+  const filas=[["Fecha","Empresa","Campo","Lote","Cultivo","EF","Estado","Comentarios","Tratamiento"],...pendientes().map(r=>[fechaAR(r.fecha),r.empresa,r.campo,r.loteOk?r.lote:"",r.cultivo,r.ef,r.estado,r.comentario,r.tratamiento||""])];
   const blob=new Blob(["﻿"+filas.map(f=>f.map(q).join(";")).join("\r\n")],{type:"text/csv"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`recorrida_${hoy()}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);};
 $("btnMarcar").onclick=()=>{const p=pendientes(); if(!confirm(`¿Marcar ${p.length} registros como cargados en AppSheet?`)) return; p.forEach(r=>r.carga="cargado"); guardar(); refrescar(); toast("Marcados como cargados");};
